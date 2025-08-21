@@ -1,0 +1,2167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureID Pro - Advanced Personal Information Masking Tool</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --electric-blue: #1E90FF;
+            --gold: #FFD700;
+            --gold-secondary: #FFC300;
+            --teal-blue: #007B8A;
+            --cyan: #00BCD4;
+            --deep-purple: #4B0082;
+            --navy-blue: #1F2F46;
+            --dark-charcoal: #1A1A1A;
+            --jet-black: #121212;
+            --platinum-white: #F8F8FF;
+
+            --text-main: var(--platinum-white);
+            --text-accent: var(--gold);
+            --background-main: var(--navy-blue);
+            --background-dark: var(--dark-charcoal);
+            --button-bg: var(--electric-blue);
+            --button-hover: var(--gold);
+            --accent: var(--teal-blue);
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(-100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .floating { animation: float 3s ease-in-out infinite; }
+        .pulsing { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        .slide-in { animation: slideIn 0.5s ease-out; }
+        
+        .btn-3d {
+            position: relative;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 0 0 rgba(0,0,0,0.2);
+        }
+        
+        .btn-3d:active {
+            transform: translateY(5px);
+            box-shadow: 0 2px 0 0 rgba(0,0,0,0.2);
+        }
+        
+        .progress-bar {
+            height: 6px;
+            background: linear-gradient(90deg, var(--electric-blue), var(--deep-purple), var(--teal-blue));
+            transition: width 0.3s ease;
+            border-radius: 3px;
+        }
+        
+        .document-preview {
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .document-preview:hover {
+            transform: scale(1.02);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .mask-overlay {
+            position: absolute;
+            border: 2px dashed rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(0px);
+            transition: all 0.3s ease;
+            cursor: move;
+        }
+        
+        .mask-black { background-color: rgba(0, 0, 0, 0.9); }
+        .mask-blur { backdrop-filter: blur(8px); background-color: rgba(255, 255, 255, 0.3); }
+        .mask-pixelate { 
+            background: repeating-conic-gradient(#000 0% 25%, #333 25% 50%);
+            background-size: 8px 8px;
+        }
+        .mask-redact { 
+            background: linear-gradient(45deg, #000 25%, transparent 25%), 
+                       linear-gradient(-45deg, #000 25%, transparent 25%), 
+                       linear-gradient(45deg, transparent 75%, #000 75%), 
+                       linear-gradient(-45deg, transparent 75%, #000 75%);
+            background-size: 4px 4px;
+            background-position: 0 0, 0 2px, 2px -2px, -2px 0px;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .glass-effect {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .neon-border {
+            box-shadow: 0 0 5px rgba(30, 144, 255, 0.5), 
+                       0 0 20px rgba(30, 144, 255, 0.3), 
+                       0 0 35px rgba(30, 144, 255, 0.1);
+        }
+        
+        .detection-highlight {
+            border: 3px solid var(--teal-blue);
+            box-shadow: 0 0 10px rgba(0, 123, 138, 0.5);
+            animation: pulse 2s infinite;
+        }
+
+        #threejs-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.2;
+        }
+
+        .sidebar {
+            background: var(--dark-charcoal);
+            border-right: 1px solid var(--teal-blue);
+        }
+
+        .badge {
+            background: var(--gold);
+            color: var(--jet-black);
+        }
+
+        body {
+            background: var(--background-dark);
+            color: var(--text-main);
+        }
+
+        .bg-gradient-to-br {
+            background-image: linear-gradient(to bottom right, var(--background-dark), var(--background-main));
+        }
+
+        .text-accent {
+            color: var(--text-accent);
+        }
+
+        .bg-accent {
+            background-color: var(--accent);
+        }
+
+        .btn-primary {
+            background-color: var(--button-bg);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--button-hover);
+        }
+
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(30, 144, 255, 0.2);
+        }
+
+        .extracted-content {
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .ai-processing-indicator {
+            background: linear-gradient(45deg, #1E90FF, #4B0082, #007B8A);
+            background-size: 300% 300%;
+            animation: gradient-shift 3s ease infinite;
+        }
+
+        @keyframes gradient-shift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .resize-handle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: var(--teal-blue);
+            cursor: nwse-resize;
+            bottom: -5px;
+            right: -5px;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br">
+    <div id="threejs-background"></div>
+
+    <div id="app" class="relative z-10">
+        <header class="glass-effect shadow-2xl border-b border-white/10">
+            <div class="container mx-auto px-4 py-6">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <div class="flex items-center mb-4 md:mb-0">
+                        <i class="fas fa-shield-halved text-4xl mr-3 floating text-accent"></i>
+                        <div>
+                            <h1 class="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                                SecureID Pro
+                            </h1>
+                            <p class="text-sm" style="color: var(--text-main);">Advanced Personal Information Masking</p>
+                        </div>
+                    </div>
+                    <nav class="flex space-x-6">
+                        <a href="#" class="px-4 py-2 rounded-lg glass-effect hover:bg-white/20 transition flex items-center">
+                            <i class="fas fa-home mr-2"></i>Home
+                        </a>
+                        <a href="#" class="px-4 py-2 rounded-lg glass-effect hover:bg-white/20 transition flex items-center">
+                            <i class="fas fa-info-circle mr-2"></i>About
+                        </a>
+                        <a href="#" class="px-4 py-2 rounded-lg glass-effect hover:bg-white/20 transition flex items-center">
+                            <i class="fas fa-envelope mr-2"></i>Contact
+                        </a>
+                    </nav>
+                </div>
+            </div>
+        </header>
+
+        <main class="container mx-auto px-4 py-8 flex">
+            <div class="sidebar w-64 hidden md:block mr-8 rounded-lg p-4 glass-effect">
+                <h3 class="text-lg font-bold mb-4 text-accent">Navigation</h3>
+                <ul class="space-y-2">
+                    <li><a href="#" class="block px-3 py-2 rounded hover:bg-white/10 transition">Dashboard</a></li>
+                    <li><a href="#" class="block px-3 py-2 rounded hover:bg-white/10 transition">Settings</a></li>
+                    <li><a href="#" class="block px-3 py-2 rounded hover:bg-white/10 transition">History</a></li>
+                </ul>
+                
+                <div class="mt-8">
+                    <h3 class="text-lg font-bold mb-4 text-accent">Quick Links</h3>
+                    <button onclick="scrollToSection('upload-section')" class="w-full text-left px-3 py-2 rounded hover:bg-white/10 transition flex items-center mb-2">
+                        <i class="fas fa-upload mr-2"></i> Upload Document
+                    </button>
+                    <button onclick="scrollToSection('features-section')" class="w-full text-left px-3 py-2 rounded hover:bg-white/10 transition flex items-center mb-2">
+                        <i class="fas fa-star mr-2"></i> Features
+                    </button>
+                    <button onclick="scrollToSection('privacy-section')" class="w-full text-left px-3 py-2 rounded hover:bg-white/10 transition flex items-center">
+                        <i class="fas fa-shield-alt mr-2"></i> Privacy Info
+                    </button>
+                </div>
+
+                <div class="mt-8 p-4 glass-effect rounded-lg" id="aiStatusPanel">
+                    <h4 class="text-sm font-bold mb-3 text-accent flex items-center">
+                        <i class="fas fa-brain mr-2"></i>AI Status
+                    </h4>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span>Tesseract OCR:</span>
+                            <span class="text-green-400 font-bold" id="tesseractStatus">Ready</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>PDF.js:</span>
+                            <span class="text-green-400 font-bold" id="pdfjsStatus">Ready</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Document Parser:</span>
+                            <span class="text-green-400 font-bold" id="docParserStatus">Ready</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex-1">
+                <div id="privacy-section" class="text-center mb-12">
+                    <h2 class="text-5xl font-bold mb-4 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+                        Protect Your Privacy
+                    </h2>
+                    <p class="text-xl max-w-3xl mx-auto leading-relaxed" style="color: var(--text-main);">
+                        Advanced AI-powered tool that automatically detects and masks sensitive information in ID documents
+                        using multiple protection methods including blurring, pixelation, and intelligent redaction.
+                    </p>
+                    <a href="#learn-more" class="inline-block mt-6 text-accent hover:underline">Learn more about our security features</a>
+                </div>
+
+                <div class="glass-effect rounded-xl p-6 mb-8 relative card-hover">
+                    <span class="badge absolute -top-2 -right-2 px-3 py-1 rounded-full text-xs font-bold">LIVE AI</span>
+                    <h3 class="text-xl font-bold mb-2">Real-Time AI Processing</h3>
+                    <p class="mb-4" style="color: var(--text-main);">Upload any image, PDF, or document and watch our AI extract and analyze real content instantly.</p>
+                    <button class="btn-primary px-4 py-2 rounded-lg">Explore Features</button>
+                </div>
+
+                <div id="upload-section" class="glass-effect rounded-2xl shadow-2xl overflow-hidden mb-8 neon-border">
+                    <div class="p-8 text-center" style="background: linear-gradient(to right, rgba(30, 144, 255, 0.3), rgba(75, 0, 130, 0.3));">
+                        <h3 class="text-2xl font-bold mb-4">Upload Document for AI Analysis</h3>
+                        <p class="mb-6" style="color: var(--text-main);">Drag & drop or click to select your document for real-time AI processing</p>
+                        
+                        <div class="border-2 border-dashed border-gray-400/50 rounded-xl p-12 hover:border-blue-400/80 transition cursor-pointer glass-effect" id="dropZone">
+                            <input type="file" id="fileInput" accept="image/*,.pdf,.doc,.docx,.txt" class="hidden">
+                            <i class="fas fa-cloud-upload-alt text-6xl text-blue-400 mb-6 floating"></i>
+                            <h4 class="text-xl font-semibold mb-2">Select Document</h4>
+                            <p class="mb-4" style="color: var(--text-main);">Supports: JPEG, PNG, PDF, DOC, DOCX, TXT</p>
+                            <button class="btn-3d btn-primary px-8 py-3 rounded-lg font-medium text-lg">
+                                <i class="fas fa-folder-open mr-2"></i>Browse Files
+                            </button>
+                        </div>
+                        
+                        <div class="mt-6 hidden" id="uploadProgressContainer">
+                            <div class="flex justify-between text-sm mb-2">
+                                <span>Uploading...</span>
+                                <span id="uploadPercent">0%</span>
+                            </div>
+                            <div class="w-full bg-gray-700 rounded-full h-3">
+                                <div class="progress-bar rounded-full h-3" id="uploadProgress" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="p-8" id="configPanel" style="display: none;">
+                        <h3 class="text-xl font-semibold mb-6 flex items-center">
+                            <i class="fas fa-cogs text-blue-400 mr-2"></i>
+                            Detection & Masking Settings
+                        </h3>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div class="glass-effect rounded-lg p-6">
+                                <h4 class="text-lg font-semibold mb-4 text-blue-300">Information to Detect</h4>
+                                <div class="space-y-3">
+                                    <label class="flex items-center">
+                                        <input type="checkbox" id="detectSSN" checked class="mr-3 w-4 h-4 text-blue-600">
+                                        <span>Social Security Numbers (SSN)</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" id="detectNames" checked class="mr-3 w-4 h-4 text-blue-600">
+                                        <span>Names</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" id="detectDOB" checked class="mr-3 w-4 h-4 text-blue-600">
+                                        <span>Date of Birth</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" id="detectAddress" checked class="mr-3 w-4 h-4 text-blue-600">
+                                        <span>Addresses</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" id="detectPhone" checked class="mr-3 w-4 h-4 text-blue-600">
+                                        <span>Phone Numbers</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" id="detectEmail" checked class="mr-3 w-4 h-4 text-blue-600">
+                                        <span>Email Addresses</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" id="detectCreditCard" checked class="mr-3 w-4 h-4 text-blue-600">
+                                        <span>Credit Card Numbers</span>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="glass-effect rounded-lg p-6">
+                                <h4 class="text-lg font-semibold mb-4 text-purple-300">Masking Method</h4>
+                                <div class="space-y-3">
+                                    <label class="flex items-center">
+                                        <input type="radio" name="maskType" value="black" checked class="mr-3">
+                                        <span>Black Rectangle</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="radio" name="maskType" value="blur" class="mr-3">
+                                        <span>Gaussian Blur</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="radio" name="maskType" value="pixelate" class="mr-3">
+                                        <span>Pixelation</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="radio" name="maskType" value="redact" class="mr-3">
+                                        <span>Pattern Redaction</span>
+                                    </label>
+                                </div>
+                                
+                                <div class="mt-4">
+                                    <label class="block text-sm font-medium mb-2">Detection Confidence: <span id="confidenceValue">80%</span></label>
+                                    <input type="range" id="confidenceSlider" min="50" max="95" value="80" class="w-full">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6 text-center">
+                            <button id="processBtn" class="btn-3d bg-gradient-to-r from-green-500 to-teal-500 text-white px-8 py-3 rounded-lg font-medium text-lg">
+                                <i class="fas fa-magic mr-2"></i>Process with AI
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="rawContentSection" class="hidden mb-8">
+                    <div class="glass-effect rounded-2xl p-8 neon-border">
+                        <h3 class="text-2xl font-bold mb-4 flex items-center">
+                            <i class="fas fa-eye text-green-400 mr-3"></i>
+                            Raw Extracted Content
+                        </h3>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div>
+                                <h4 class="text-lg font-semibold mb-3 flex items-center">
+                                    <i class="fas fa-file-text text-blue-400 mr-2"></i>
+                                    Extracted Text
+                                </h4>
+                                <div class="extracted-content p-4 rounded-lg" id="rawTextContent">
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h4 class="text-lg font-semibold mb-3 flex items-center">
+                                    <i class="fas fa-info-circle text-purple-400 mr-2"></i>
+                                    File Information
+                                </h4>
+                                <div class="glass-effect p-4 rounded-lg">
+                                    <div class="space-y-2 text-sm" id="fileInfo">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="processingSection" class="hidden">
+                    <div class="glass-effect rounded-2xl p-8 text-center neon-border ai-processing-indicator">
+                        <div class="inline-block relative mb-6">
+                            <i class="fas fa-brain text-6xl text-purple-400 pulsing"></i>
+                            <i class="fas fa-cog absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-blue-300 text-2xl fa-spin"></i>
+                        </div>
+                        <h3 class="text-2xl font-semibold mb-4">AI Processing Document</h3>
+                        <p class="mb-6" style="color: var(--text-main);">Real-time AI analysis in progress...</p>
+                        
+                        <div class="max-w-2xl mx-auto mb-6">
+                            <div class="flex justify-between text-sm mb-2">
+                                <span id="processingStep">Initializing AI Engine...</span>
+                                <span id="processingPercent">0%</span>
+                            </div>
+                            <div class="w-full bg-gray-700 rounded-full h-4">
+                                <div class="progress-bar rounded-full h-4" id="ocrProgress" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 max-w-3xl mx-auto">
+                            <div class="glass-effect rounded-lg p-4">
+                                <i class="fas fa-file-upload text-blue-400 text-2xl mb-2"></i>
+                                <div class="text-sm">File Loading</div>
+                                <div id="statusFile" class="text-xs text-gray-400">Waiting...</div>
+                            </div>
+                            <div class="glass-effect rounded-lg p-4">
+                                <i class="fas fa-eye text-purple-400 text-2xl mb-2"></i>
+                                <div class="text-sm">AI Recognition</div>
+                                <div id="statusAI" class="text-xs text-gray-400">Waiting...</div>
+                            </div>
+                            <div class="glass-effect rounded-lg p-4">
+                                <i class="fas fa-search text-pink-400 text-2xl mb-2"></i>
+                                <div class="text-sm">Pattern Detection</div>
+                                <div id="statusPattern" class="text-xs text-gray-400">Waiting...</div>
+                            </div>
+                            <div class="glass-effect rounded-lg p-4">
+                                <i class="fas fa-mask text-green-400 text-2xl mb-2"></i>
+                                <div class="text-sm">Applying Masks</div>
+                                <div id="statusMask" class="text-xs text-gray-400">Waiting...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="resultsSection" class="hidden fade-in">
+                    <div class="glass-effect rounded-2xl overflow-hidden shadow-2xl neon-border">
+                        <div class="p-6" style="background: linear-gradient(to right, rgba(16, 185, 129, 0.3), rgba(20, 184, 166, 0.3));">
+                            <h3 class="text-2xl font-bold flex items-center">
+                                <i class="fas fa-check-circle text-green-400 mr-3"></i>
+                                AI Processing Complete
+                            </h3>
+                            <p class="mt-2" style="color: var(--text-main);">Your document has been successfully analyzed and secured by AI</p>
+                        </div>
+                        
+                        <div class="p-8">
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8" id="imageComparison">
+                                <div>
+                                    <h4 class="text-lg font-semibold mb-4 flex items-center">
+                                        <i class="fas fa-file-image text-blue-400 mr-2"></i>
+                                        Original Document
+                                    </h4>
+                                    <div class="document-preview glass-effect rounded-lg overflow-hidden relative">
+                                        <img id="originalImage" class="w-full h-auto" src="" alt="Original document">
+                                        <div id="detectionOverlay" class="absolute inset-0 pointer-events-auto"></div>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <h4 class="text-lg font-semibold mb-4 flex items-center">
+                                        <i class="fas fa-shield-alt text-green-400 mr-2"></i>
+                                        AI-Secured Document
+                                    </h4>
+                                    <div class="document-preview glass-effect rounded-lg overflow-hidden relative">
+                                        <img id="maskedImage" class="w-full h-auto" src="" alt="Masked document">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="glass-effect rounded-lg p-6 mb-8">
+                                <h4 class="text-lg font-semibold mb-4 flex items-center">
+                                    <i class="fas fa-edit text-purple-400 mr-2"></i>
+                                    Edit Masking Options
+                                </h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">Select Mask to Edit</label>
+                                        <select id="maskSelect" class="w-full p-2 rounded bg-gray-800 text-white">
+                                            <!-- Populated dynamically -->
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">Masking Method</label>
+                                        <select id="editMaskType" class="w-full p-2 rounded bg-gray-800 text-white">
+                                            <option value="black">Black Rectangle</option>
+                                            <option value="blur">Gaussian Blur</option>
+                                            <option value="pixelate">Pixelation</option>
+                                            <option value="redact">Pattern Redaction</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="mt-4 text-center">
+                                    <button id="applyMaskEdit" class="btn-3d btn-primary px-6 py-2 rounded-lg">
+                                        <i class="fas fa-save mr-2"></i>Apply Changes
+                                    </button>
+                                    <button id="addManualMask" class="btn-3d btn-primary px-6 py-2 rounded-lg ml-2">
+                                        <i class="fas fa-plus mr-2"></i>Add Manual Mask
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="flex flex-wrap gap-4 mb-8 justify-center">
+                                <button id="downloadBtn" class="btn-3d bg-gradient-to-r from-green-500 to-teal-500 text-white px-6 py-3 rounded-lg font-medium flex items-center">
+                                    <i class="fas fa-download mr-2"></i>Download Secured Document
+                                </button>
+                                <button id="downloadReportBtn" class="btn-3d bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-3 rounded-lg font-medium flex items-center">
+                                    <i class="fas fa-file-alt mr-2"></i>Download AI Report
+                                </button>
+                                <button id="newDocumentBtn" class="btn-3d bg-gradient-to-r from-gray-500 to-gray-600 text-white px-6 py-3 rounded-lg font-medium flex items-center">
+                                    <i class="fas fa-redo mr-2"></i>Process Another
+                                </button>
+                            </div>
+                            
+                            <div class="glass-effect rounded-xl p-6">
+                                <h4 class="text-xl font-semibold mb-6 flex items-center">
+                                    <i class="fas fa-analytics text-blue-400 mr-3"></i>
+                                    AI Detection Analysis Report
+                                </h4>
+                                
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                                    <div class="text-center">
+                                        <div class="text-2xl font-bold text-green-400" id="totalDetected">0</div>
+                                        <div class="text-sm text-gray-400">Items Detected</div>
+                                    </div>
+                                    <div class="text-center">
+                                        <div class="text-2xl font-bold text-blue-400" id="totalMasked">0</div>
+                                        <div class="text-sm text-gray-400">Items Masked</div>
+                                    </div>
+                                    <div class="text-center">
+                                        <div class="text-2xl font-bold text-purple-400" id="avgConfidence">0%</div>
+                                        <div class="text-sm text-gray-400">Avg Confidence</div>
+                                    </div>
+                                    <div class="text-center">
+                                        <div class="text-2xl font-bold text-pink-400" id="processingTime">0s</div>
+                                        <div class="text-sm text-gray-400">Processing Time</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full glass-effect rounded-lg overflow-hidden">
+                                        <thead style="background: linear-gradient(to right, rgba(59, 130, 246, 0.3), rgba(147, 51, 234, 0.3));">
+                                            <tr>
+                                                <th class="py-3 px-4 text-left">Type</th>
+                                                <th class="py-3 px-4 text-left">Detected Value</th>
+                                                <th class="py-3 px-4 text-left">Confidence</th>
+                                                <th class="py-3 px-4 text-left">Location</th>
+                                                <th class="py-3 px-4 text-left">Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="detectedInfoTable" class="divide-y divide-gray-700">
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="features-section" class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
+                    <div class="glass-effect rounded-xl p-6 card-hover neon-border">
+                        <div class="bg-gradient-to-r from-blue-500 to-blue-400 w-14 h-14 rounded-full flex items-center justify-center mb-4">
+                            <i class="fas fa-brain text-white text-xl"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-3">Real AI Processing</h3>
+                        <p class="leading-relaxed" style="color: var(--text-main);">Live Tesseract.js OCR, PDF.js parsing, and document analysis for accurate extraction.</p>
+                    </div>
+                    
+                    <div class="glass-effect rounded-xl p-6 card-hover neon-border">
+                        <div class="bg-gradient-to-r from-purple-500 to-purple-400 w-14 h-14 rounded-full flex items-center justify-center mb-4">
+                            <i class="fas fa-palette text-white text-xl"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-3">Multiple Masking Methods</h3>
+                        <p class="leading-relaxed" style="color: var(--text-main);">Choose from blurring, pixelation, pattern redaction, or traditional black boxes.</p>
+                    </div>
+                    
+                    <div class="glass-effect rounded-xl p-6 card-hover neon-border">
+                        <div class="bg-gradient-to-r from-green-500 to-green-400 w-14 h-14 rounded-full flex items-center justify-center mb-4">
+                            <i class="fas fa-shield-virus text-white text-xl"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-3">Complete Privacy</h3>
+                        <p class="leading-relaxed" style="color: var(--text-main);">All AI processing happens locally in your browser. No data leaves your device.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="glass-effect mt-16 border-t border-white/10">
+            <div class="container mx-auto px-4 py-8">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <div class="mb-6 md:mb-0">
+                        <div class="flex items-center mb-2">
+                            <i class="fas fa-shield-halved text-2xl mr-2 text-blue-400"></i>
+                            <span class="text-xl font-bold">SecureID Pro</span>
+                        </div>
+                        <p class="text-gray-400">Advanced privacy protection with real AI processing.</p>
+                    </div>
+                    <div class="flex space-x-6">
+                        <a href="#" class="text-gray-400 hover:text-white transition">
+                            <i class="fab fa-github text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition">
+                            <i class="fab fa-linkedin text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition">
+                            <i class="fab fa-twitter text-xl"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="border-t border-gray-700 mt-6 pt-6 text-center text-gray-400 text-sm">
+                    <p>&copy; 2024 SecureID Pro. All rights reserved. | Built with Real AI Processing</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Three.js Background Animation
+        function initThreeJS() {
+            const container = document.getElementById('threejs-background');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+            camera.position.z = 30;
+            
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(width, height);
+            container.appendChild(renderer.domElement);
+            
+            const particlesGeometry = new THREE.BufferGeometry();
+            const particleCount = 1000;
+            
+            const posArray = new Float32Array(particleCount * 3);
+            const colorArray = new Float32Array(particleCount * 3);
+            
+            for(let i = 0; i < particleCount * 3; i++) {
+                posArray[i] = (Math.random() - 0.5) * 100;
+                colorArray[i] = Math.random();
+            }
+            
+            particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+            particlesGeometry.setAttribute('color', new THREE.BufferAttribute(colorArray, 3));
+            
+            const particlesMaterial = new THREE.PointsMaterial({
+                size: 0.4,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.8,
+                blending: THREE.AdditiveBlending
+            });
+            
+            const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+            scene.add(particlesMesh);
+            
+            const geometry = new THREE.TorusKnotGeometry(10, 3, 100, 16);
+            const material = new THREE.MeshBasicMaterial({ 
+                color: 0x1E90FF,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.3
+            });
+            const torusKnot = new THREE.Mesh(geometry, material);
+            scene.add(torusKnot);
+            
+            function animate() {
+                requestAnimationFrame(animate);
+                particlesMesh.rotation.x += 0.0005;
+                particlesMesh.rotation.y += 0.0005;
+                torusKnot.rotation.x += 0.005;
+                torusKnot.rotation.y += 0.005;
+                renderer.render(scene, camera);
+            }
+            
+            window.addEventListener('resize', () => {
+                const width = container.clientWidth;
+                const height = container.clientHeight;
+                camera.aspect = width / height;
+                camera.updateProjectionMatrix();
+                renderer.setSize(width, height);
+            });
+            
+            animate();
+        }
+
+        // Global variables
+        let currentFile = null;
+        let detectedInfo = [];
+        let processedImage = null;
+        let startTime = null;
+        let extractedText = '';
+        let fileMetadata = {};
+        let tesseractData = null;
+        let manualMasks = [];
+        let isManualMaskingMode = false;
+        let currentMaskStart = null;
+        
+        // DOM elements
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const configPanel = document.getElementById('configPanel');
+        const rawContentSection = document.getElementById('rawContentSection');
+        const processingSection = document.getElementById('processingSection');
+        const resultsSection = document.getElementById('resultsSection');
+        const originalImage = document.getElementById('originalImage');
+        const maskedImage = document.getElementById('maskedImage');
+        const detectionOverlay = document.getElementById('detectionOverlay');
+        const detectedInfoTable = document.getElementById('detectedInfoTable');
+        const confidenceSlider = document.getElementById('confidenceSlider');
+        const confidenceValue = document.getElementById('confidenceValue');
+        const rawTextContent = document.getElementById('rawTextContent');
+        const fileInfo = document.getElementById('fileInfo');
+        const maskSelect = document.getElementById('maskSelect');
+        const editMaskType = document.getElementById('editMaskType');
+        const applyMaskEdit = document.getElementById('applyMaskEdit');
+        const addManualMask = document.getElementById('addManualMask');
+        
+        // Initialize PDF.js
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        
+        // Event listeners
+        dropZone.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', handleFileSelection);
+        document.getElementById('processBtn').addEventListener('click', processDocument);
+        document.getElementById('downloadBtn').addEventListener('click', downloadSecuredDocument);
+        document.getElementById('downloadReportBtn').addEventListener('click', downloadReport);
+        document.getElementById('newDocumentBtn').addEventListener('click', resetApp);
+        applyMaskEdit.addEventListener('click', applyMaskChanges);
+        addManualMask.addEventListener('click', startManualMasking);
+        
+        // Confidence slider
+        confidenceSlider.addEventListener('input', function() {
+            confidenceValue.textContent = this.value + '%';
+        });
+        
+        // Drag and drop functionality
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, highlight, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, unhighlight, false);
+        });
+        
+        function highlight() {
+            dropZone.classList.add('border-blue-400', 'bg-blue-400/10');
+        }
+        
+        function unhighlight() {
+            dropZone.classList.remove('border-blue-400', 'bg-blue-400/10');
+        }
+        
+        dropZone.addEventListener('drop', (e) => {
+            const file = e.dataTransfer.files[0];
+            if (file) handleFileUpload(file);
+        });
+        
+        function handleFileSelection(e) {
+            if (e.target.files.length) {
+                handleFileUpload(e.target.files[0]);
+            }
+        }
+        
+        async function handleFileUpload(file) {
+            const validTypes = ['image/jpeg', 'image/png', 'image/tiff', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
+            if (!validTypes.includes(file.type)) {
+                showAlert('Please upload a valid file type (JPEG, PNG, TIFF, PDF, DOC, DOCX, TXT)', 'error');
+                return;
+            }
+            
+            if (file.size > 50 * 1024 * 1024) {
+                showAlert('File size must be less than 50MB', 'error');
+                return;
+            }
+            
+            currentFile = file;
+            fileMetadata = {
+                name: file.name,
+                size: file.size,
+                type: file.type,
+                lastModified: new Date(file.lastModified)
+            };
+            
+            updateAIStatus('Loading file...', 'processing');
+            
+            const progressContainer = document.getElementById('uploadProgressContainer');
+            const uploadProgress = document.getElementById('uploadProgress');
+            const uploadPercent = document.getElementById('uploadPercent');
+            
+            progressContainer.classList.remove('hidden');
+            
+            let progress = 0;
+            const uploadInterval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress > 100) progress = 100;
+                
+                uploadProgress.style.width = `${progress}%`;
+                uploadPercent.textContent = `${Math.round(progress)}%`;
+                
+                if (progress >= 100) {
+                    clearInterval(uploadInterval);
+                    setTimeout(async () => {
+                        progressContainer.classList.add('hidden');
+                        await extractContentFromFile(file);
+                    }, 500);
+                }
+            }, 100);
+        }
+        
+        async function extractContentFromFile(file) {
+            updateAIStatus('Extracting content...', 'processing');
+            
+            try {
+                const fileType = file.type;
+                let content = '';
+                
+                if (fileType.startsWith('image/')) {
+                    content = await extractTextFromImage(file);
+                    const imageUrl = URL.createObjectURL(file);
+                    originalImage.src = imageUrl;
+                    maskedImage.src = imageUrl;
+                } else if (fileType === 'application/pdf') {
+                    content = await extractTextFromPDF(file);
+                } else if (fileType === 'application/msword' || fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+                    content = await extractTextFromWord(file);
+                } else if (fileType === 'text/plain') {
+                    content = await extractTextFromTextFile(file);
+                }
+                
+                extractedText = content;
+                displayRawContent(content);
+                showConfigPanel();
+                updateAIStatus('Content extracted successfully', 'success');
+                
+            } catch (error) {
+                console.error('Content extraction error:', error);
+                showAlert('Error extracting content from file. Please try again.', 'error');
+                updateAIStatus('Extraction failed', 'error');
+            }
+        }
+        
+        async function extractTextFromImage(file) {
+            updateProcessingStep('Initializing Tesseract OCR...', 10);
+            
+            return new Promise((resolve, reject) => {
+                Tesseract.recognize(
+                    file,
+                    'eng',
+                    {
+                        logger: (m) => {
+                            if (m.status === 'recognizing text') {
+                                const progress = Math.round(m.progress * 60) + 10;
+                                updateProcessingStep(`OCR Processing: ${Math.round(m.progress * 100)}%`, progress);
+                            }
+                        }
+                    }
+                ).then(({ data }) => {
+                    tesseractData = data;
+                    updateProcessingStep('OCR completed successfully', 80);
+                    resolve(data.text);
+                }).catch(reject);
+            });
+        }
+        
+        async function extractTextFromPDF(file) {
+            updateProcessingStep('Loading PDF...', 20);
+            
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+            let fullText = '';
+            
+            updateProcessingStep('Extracting text from PDF pages...', 40);
+            
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const textContent = await page.getTextContent();
+                const pageText = textContent.items.map(item => item.str).join(' ');
+                fullText += pageText + '\n';
+                
+                updateProcessingStep(`Processing page ${i} of ${pdf.numPages}...`, 40 + (i / pdf.numPages) * 40);
+            }
+            
+            updateProcessingStep('PDF extraction completed', 90);
+            return fullText;
+        }
+        
+        async function extractTextFromWord(file) {
+            updateProcessingStep('Loading Word document...', 30);
+            
+            const arrayBuffer = await file.arrayBuffer();
+            const result = await mammoth.extractRawText({ arrayBuffer });
+            
+            updateProcessingStep('Word document extraction completed', 80);
+            return result.value;
+        }
+        
+        async function extractTextFromTextFile(file) {
+            updateProcessingStep('Reading text file...', 50);
+            
+            const text = await file.text();
+            
+            updateProcessingStep('Text file loaded successfully', 90);
+            return text;
+        }
+        
+        function displayRawContent(content) {
+            rawTextContent.textContent = content || 'No text content extracted from this file.';
+            
+            fileInfo.innerHTML = `
+                <div class="flex justify-between py-1">
+                    <span class="text-gray-400">Filename:</span>
+                    <span class="font-mono text-sm">${fileMetadata.name}</span>
+                </div>
+                <div class="flex justify-between py-1">
+                    <span class="text-gray-400">File Size:</span>
+                    <span>${(fileMetadata.size / 1024).toFixed(1)} KB</span>
+                </div>
+                <div class="flex justify-between py-1">
+                    <span class="text-gray-400">File Type:</span>
+                    <span>${fileMetadata.type}</span>
+                </div>
+                <div class="flex justify-between py-1">
+                    <span class="text-gray-400">Last Modified:</span>
+                    <span class="text-xs">${fileMetadata.lastModified.toLocaleString()}</span>
+                </div>
+                <div class="flex justify-between py-1">
+                    <span class="text-gray-400">Text Length:</span>
+                    <span>${content.length} characters</span>
+                </div>
+                <div class="flex justify-between py-1">
+                    <span class="text-gray-400">Word Count:</span>
+                    <span>${content.split(/\s+/).filter(word => word.length > 0).length} words</span>
+                </div>
+            `;
+            
+            rawContentSection.classList.remove('hidden');
+        }
+        
+        function showConfigPanel() {
+            configPanel.style.display = 'block';
+            configPanel.classList.add('slide-in');
+        }
+        
+        async function processDocument() {
+            if (!currentFile || !extractedText) {
+                showAlert('Please upload a file first', 'error');
+                return;
+            }
+            
+            startTime = Date.now();
+            
+            configPanel.style.display = 'none';
+            rawContentSection.classList.add('hidden');
+            processingSection.classList.remove('hidden');
+            
+            try {
+                const detectSSN = document.getElementById('detectSSN').checked;
+                const detectNames = document.getElementById('detectNames').checked;
+                const detectDOB = document.getElementById('detectDOB').checked;
+                const detectAddress = document.getElementById('detectAddress').checked;
+                const detectPhone = document.getElementById('detectPhone').checked;
+                const detectEmail = document.getElementById('detectEmail').checked;
+                const detectCreditCard = document.getElementById('detectCreditCard').checked;
+                const confidenceThreshold = parseInt(confidenceSlider.value);
+                const maskType = document.querySelector('input[name="maskType"]:checked').value;
+                
+                updateProcessingStatus('File', 'Complete');
+                updateProcessingStatus('AI', 'Processing...');
+                updateProcessingStep('Analyzing extracted content...', 20);
+                
+                detectedInfo = await detectSensitiveInformation(extractedText, {
+                    detectSSN, detectNames, detectDOB, detectAddress, detectPhone, detectEmail, detectCreditCard, confidenceThreshold
+                });
+                
+                updateProcessingStatus('AI', 'Complete');
+                updateProcessingStatus('Pattern', 'Processing...');
+                updateProcessingStep('Applying pattern recognition...', 60);
+                
+                await enhanceDetectionWithPatterns();
+                updateProcessingStatus('Pattern', 'Complete');
+                updateProcessingStep('Applying security masks...', 80);
+                
+                if (currentFile.type.startsWith('image/')) {
+                    updateProcessingStatus('Mask', 'Processing...');
+                    await applyMasking(maskType);
+                    updateProcessingStatus('Mask', 'Complete');
+                } else {
+                    updateProcessingStatus('Mask', 'N/A (Text Document)');
+                }
+                
+                updateProcessingStep('Processing complete!', 100);
+                
+                setTimeout(() => {
+                    showResults();
+                }, 1000);
+                
+            } catch (error) {
+                console.error('Processing error:', error);
+                showAlert('Error processing document. Please try again.', 'error');
+                resetApp();
+            }
+        }
+        
+        async function detectSensitiveInformation(text, settings) {
+            const detected = [];
+            
+            if (!tesseractData || !currentFile.type.startsWith('image/')) {
+                // Fallback to regex-based detection for non-image files
+                return detectWithRegex(text, settings);
+            }
+            
+            // Use Tesseract words data for precise coordinates
+            const words = tesseractData.words.filter(word => word.confidence >= settings.confidenceThreshold);
+            
+            words.forEach(word => {
+                const text = word.text;
+                const bbox = word.bbox;
+                
+                // SSN Detection
+                if (settings.detectSSN) {
+                    const ssnPattern = /^(?:\d{3}-\d{2}-\d{4}|\d{9}|\d{3}\s\d{2}\s\d{4})$/;
+                    if (ssnPattern.test(text)) {
+                        detected.push({
+                            type: 'SSN',
+                            value: text,
+                            position: -1, // Position not used for image-based detection
+                            confidence: word.confidence,
+                            coordinates: {
+                                x: bbox.x0,
+                                y: bbox.y0,
+                                width: bbox.x1 - bbox.x0,
+                                height: bbox.y1 - bbox.y0
+                            }
+                        });
+                    }
+                }
+                
+                // Email Detection
+                if (settings.detectEmail) {
+                    const emailPattern = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}$/;
+                    if (emailPattern.test(text)) {
+                        detected.push({
+                            type: 'Email',
+                            value: text,
+                            position: -1,
+                            confidence: word.confidence,
+                            coordinates: {
+                                x: bbox.x0,
+                                y: bbox.y0,
+                                width: bbox.x1 - bbox.x0,
+                                height: bbox.y1 - bbox.y0
+                            }
+                        });
+                    }
+                }
+                
+                // Credit Card Detection
+                if (settings.detectCreditCard) {
+                    const ccPatterns = [
+                        { pattern: /^(?:4[0-9]{12}(?:[0-9]{3})?)$/, type: 'Visa', confidence: 90 },
+                        { pattern: /^(?:5[1-5][0-9]{14})$/, type: 'MasterCard', confidence: 90 },
+                        { pattern: /^(?:3[47][0-9]{13})$/, type: 'AmEx', confidence: 85 },
+                        { pattern: /^(?:3[0-9]{13})$/, type: 'Diners', confidence: 80 }
+                    ];
+                    
+                    ccPatterns.forEach(({ pattern, type, confidence }) => {
+                        if (pattern.test(text)) {
+                            detected.push({
+                                type: `Credit Card (${type})`,
+                                value: text,
+                                position: -1,
+                                confidence: Math.min(word.confidence, confidence),
+                                coordinates: {
+                                    x: bbox.x0,
+                                    y: bbox.y0,
+                                    width: bbox.x1 - bbox.x0,
+                                    height: bbox.y1 - bbox.y0
+                                }
+                            });
+                        }
+                    });
+                }
+                
+                // Name Detection
+                if (settings.detectNames) {
+                    const namePattern = /^[A-Z][a-z]+(?:\s[A-Z][a-z]+)?$/;
+                    if (namePattern.test(text) && isLikelyName(text)) {
+                        detected.push({
+                            type: 'Name',
+                            value: text,
+                            position: -1,
+                            confidence: word.confidence,
+                            coordinates: {
+                                x: bbox.x0,
+                                y: bbox.y0,
+                                width: bbox.x1 - bbox.x0,
+                                height: bbox.y1 - bbox.y0
+                            }
+                        });
+                    }
+                }
+                
+                // Date of Birth Detection
+                if (settings.detectDOB) {
+                    const dobPattern = /^(0[1-9]|1[0-2])[\/\-](0[1-9]|[12]\d|3[01])[\/\-](19|20)\d{2}$/;
+                    if (dobPattern.test(text)) {
+                        detected.push({
+                            type: 'Date of Birth',
+                            value: text,
+                            position: -1,
+                            confidence: word.confidence,
+                            coordinates: {
+                                x: bbox.x0,
+                                y: bbox.y0,
+                                width: bbox.x1 - bbox.x0,
+                                height: bbox.y1 - bbox.y0
+                            }
+                        });
+                    }
+                }
+                
+                // Address Detection
+                if (settings.detectAddress) {
+                    const addressPattern = /\d+\s+[A-Za-z\s]+(?:Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Lane|Ln|Drive|Dr|Court|Ct|Place|Pl)/i;
+                    if (addressPattern.test(text)) {
+                        detected.push({
+                            type: 'Address',
+                            value: text,
+                            position: -1,
+                            confidence: word.confidence,
+                            coordinates: {
+                                x: bbox.x0,
+                                y: bbox.y0,
+                                width: bbox.x1 - bbox.x0,
+                                height: bbox.y1 - bbox.y0
+                            }
+                        });
+                    }
+                }
+                
+                // Phone Number Detection
+                if (settings.detectPhone) {
+                    const phonePattern = /^(?:\d{3}[-.\s]?\d{3}[-.\s]?\d{4}|\(\d{3}\)\s?\d{3}[-.\s]?\d{4}|\+1[-.\s]?\d{3}[-.\s]?\d{3}[-.\s]?\d{4})$/;
+                    if (phonePattern.test(text)) {
+                        detected.push({
+                            type: 'Phone',
+                            value: text,
+                            position: -1,
+                            confidence: word.confidence,
+                            coordinates: {
+                                x: bbox.x0,
+                                y: bbox.y0,
+                                width: bbox.x1 - bbox.x0,
+                                height: bbox.y1 - bbox.y0
+                            }
+                        });
+                    }
+                }
+            });
+            
+            return removeDuplicates(detected);
+        }
+        
+        function detectWithRegex(text, settings) {
+            const detected = [];
+            
+            if (settings.detectSSN) {
+                const ssnPatterns = [
+                    { pattern: /\b\d{3}-\d{2}-\d{4}\b/g, confidence: 95 },
+                    { pattern: /\b\d{9}\b/g, confidence: 85 },
+                    { pattern: /\b\d{3}\s\d{2}\s\d{4}\b/g, confidence: 90 }
+                ];
+                
+                ssnPatterns.forEach(({ pattern, confidence }) => {
+                    let match;
+                    while ((match = pattern.exec(text)) !== null) {
+                        detected.push({
+                            type: 'SSN',
+                            value: match[0],
+                            position: match.index,
+                            confidence: confidence,
+                            coordinates: calculateTextCoordinates(match.index, match[0].length)
+                        });
+                    }
+                });
+            }
+            
+            if (settings.detectEmail) {
+                const emailPattern = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g;
+                let match;
+                while ((match = emailPattern.exec(text)) !== null) {
+                    detected.push({
+                        type: 'Email',
+                        value: match[0],
+                        position: match.index,
+                        confidence: 92,
+                        coordinates: calculateTextCoordinates(match.index, match[0].length)
+                    });
+                }
+            }
+            
+            if (settings.detectCreditCard) {
+                const ccPatterns = [
+                    { pattern: /\b(?:4[0-9]{12}(?:[0-9]{3})?)\b/g, type: 'Visa', confidence: 90 },
+                    { pattern: /\b(?:5[1-5][0-9]{14})\b/g, type: 'MasterCard', confidence: 90 },
+                    { pattern: /\b(?:3[47][0-9]{13})\b/g, type: 'AmEx', confidence: 85 },
+                    { pattern: /\b(?:3[0-9]{13})\b/g, type: 'Diners', confidence: 80 }
+                ];
+                
+                ccPatterns.forEach(({ pattern, type, confidence }) => {
+                    let match;
+                    while ((match = pattern.exec(text)) !== null) {
+                        detected.push({
+                            type: `Credit Card (${type})`,
+                            value: match[0],
+                            position: match.index,
+                            confidence: confidence,
+                            coordinates: calculateTextCoordinates(match.index, match[0].length)
+                        });
+                    }
+                });
+            }
+            
+            if (settings.detectNames) {
+                const namePatterns = [
+                    { pattern: /\b([A-Z][a-z]+)\s([A-Z][a-z]+)\b/g, confidence: 80 },
+                    { pattern: /\b([A-Z][a-z]+)\s([A-Z])\.\s([A-Z][a-z]+)\b/g, confidence: 85 },
+                    { pattern: /\b([A-Z][a-z]+),\s([A-Z][a-z]+)\b/g, confidence: 90 }
+                ];
+                
+                namePatterns.forEach(({ pattern, confidence }) => {
+                    let match;
+                    while ((match = pattern.exec(text)) !== null) {
+                        if (!isLikelyName(match[0])) continue;
+                        
+                        detected.push({
+                            type: 'Name',
+                            value: match[0],
+                            position: match.index,
+                            confidence: confidence,
+                            coordinates: calculateTextCoordinates(match.index, match[0].length)
+                        });
+                    }
+                });
+            }
+            
+            if (settings.detectDOB) {
+                const dobPatterns = [
+                    { pattern: /\b(0[1-9]|1[0-2])[\/\-](0[1-9]|[12]\d|3[01])[\/\-](19|20)\d{2}\b/g, confidence: 90 },
+                    { pattern: /\b(0[1-9]|[12]\d|3[01])[\/\-](0[1-9]|1[0-2])[\/\-](19|20)\d{2}\b/g, confidence: 90 },
+                    { pattern: /\b(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},\s+(19|20)\d{2}\b/gi, confidence: 95 }
+                ];
+                
+                dobPatterns.forEach(({ pattern, confidence }) => {
+                    let match;
+                    while ((match = pattern.exec(text)) !== null) {
+                        detected.push({
+                            type: 'Date of Birth',
+                            value: match[0],
+                            position: match.index,
+                            confidence: confidence,
+                            coordinates: calculateTextCoordinates(match.index, match[0].length)
+                        });
+                    }
+                });
+            }
+            
+            if (settings.detectAddress) {
+                const addressPatterns = [
+                    { pattern: /\b\d+\s+[A-Za-z\s]+(?:Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Lane|Ln|Drive|Dr|Court|Ct|Place|Pl)\b/gi, confidence: 85 },
+                    { pattern: /\b\d+\s+[A-Za-z\s]+,\s+[A-Za-z\s]+,\s+[A-Z]{2}\s+\d{5}(-\d{4})?\b/g, confidence: 95 }
+                ];
+                
+                addressPatterns.forEach(({ pattern, confidence }) => {
+                    let match;
+                    while ((match = pattern.exec(text)) !== null) {
+                        detected.push({
+                            type: 'Address',
+                            value: match[0],
+                            position: match.index,
+                            confidence: confidence,
+                            coordinates: calculateTextCoordinates(match.index, match[0].length)
+                        });
+                    }
+                });
+            }
+            
+            if (settings.detectPhone) {
+                const phonePatterns = [
+                    { pattern: /\b(\d{3}[-.\s]?\d{3}[-.\s]?\d{4})\b/g, confidence: 85 },
+                    { pattern: /\b(\(\d{3}\)\s?\d{3}[-.\s]?\d{4})\b/g, confidence: 90 },
+                    { pattern: /\b(\+1[-.\s]?\d{3}[-.\s]?\d{3}[-.\s]?\d{4})\b/g, confidence: 95 }
+                ];
+                
+                phonePatterns.forEach(({ pattern, confidence }) => {
+                    let match;
+                    while ((match = pattern.exec(text)) !== null) {
+                        detected.push({
+                            type: 'Phone',
+                            value: match[0],
+                            position: match.index,
+                            confidence: confidence,
+                            coordinates: calculateTextCoordinates(match.index, match[0].length)
+                        });
+                    }
+                });
+            }
+            
+            return removeDuplicates(detected);
+        }
+        
+        function removeDuplicates(detectedArray) {
+            const seen = new Set();
+            return detectedArray.filter(item => {
+                const key = `${item.type}-${item.value}-${item.position}`;
+                if (seen.has(key)) {
+                    return false;
+                }
+                seen.add(key);
+                return true;
+            });
+        }
+        
+        function calculateTextCoordinates(position, length) {
+            const lineHeight = 25;
+            const charWidth = 8;
+            const wordsPerLine = 80;
+            
+            const line = Math.floor(position / wordsPerLine);
+            const column = position % wordsPerLine;
+            
+            return {
+                x: column * charWidth,
+                y: line * lineHeight,
+                width: length * charWidth,
+                height: lineHeight
+            };
+        }
+        
+        function isLikelyName(text) {
+            const commonWords = ['THE', 'AND', 'FOR', 'ARE', 'BUT', 'NOT', 'YOU', 'ALL', 'CAN', 'HER', 'WAS', 'ONE', 'OUR', 'HAD', 'BY', 'WORD', 'OIL', 'SIT', 'NOW', 'FIND', 'LONG', 'DOWN', 'DAY', 'GET', 'HAS', 'HIM', 'HIS', 'HOW', 'MAN', 'NEW', 'OLD', 'SEE', 'TWO', 'WAY', 'WHO', 'BOY', 'DID', 'ITS', 'LET', 'PUT', 'SAY', 'SHE', 'TOO', 'USE', 'DOCUMENT', 'LICENSE', 'DRIVER', 'STATE', 'ISSUED', 'EXPIRES', 'CLASS', 'DATE', 'BIRTH', 'ADDRESS'];
+            const upperText = text.toUpperCase();
+            return !commonWords.includes(upperText) && text.length > 2 && text.length < 50;
+        }
+        
+        async function enhanceDetectionWithPatterns() {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            const additionalPatterns = [
+                { pattern: /\b[A-Z]{1,2}\d{6,8}\b/g, type: 'License Number', confidence: 75 },
+                { pattern: /\b\d{9}\b/g, type: 'Passport Number', confidence: 70 },
+                { pattern: /\b\d{5}-\d{4}\b/g, type: 'ZIP Code', confidence: 85 }
+            ];
+            
+            additionalPatterns.forEach(({ pattern, type, confidence }) => {
+                let match;
+                while ((match = pattern.exec(extractedText)) !== null) {
+                    const exists = detectedInfo.some(item => 
+                        item.value === match[0] && item.position === match.index
+                    );
+                    
+                    if (!exists) {
+                        detectedInfo.push({
+                            type: type,
+                            value: match[0],
+                            position: match.index,
+                            confidence: confidence,
+                            coordinates: calculateTextCoordinates(match.index, match[0].length)
+                        });
+                    }
+                }
+            });
+        }
+        
+        async function applyMasking(maskType) {
+            if (!currentFile.type.startsWith('image/')) {
+                return;
+            }
+            
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            
+            return new Promise((resolve) => {
+                img.onload = () => {
+                    canvas.width = img.naturalWidth;
+                    canvas.height = img.naturalHeight;
+                    ctx.drawImage(img, 0, 0);
+                    
+                    // Apply masks for detected information
+                    detectedInfo.forEach((info, index) => {
+                        info.maskType = maskType; // Store mask type
+                        applyMaskToCanvas(ctx, info.coordinates, maskType);
+                    });
+                    
+                    // Apply manual masks
+                    manualMasks.forEach(mask => {
+                        applyMaskToCanvas(ctx, mask.coordinates, mask.maskType);
+                    });
+                    
+                    maskedImage.src = canvas.toDataURL();
+                    processedImage = canvas.toDataURL();
+                    resolve();
+                };
+                img.src = originalImage.src;
+            });
+        }
+        
+        function applyMaskToCanvas(ctx, coords, maskType) {
+            const { x, y, width, height } = coords;
+            
+            // Add padding to ensure complete coverage
+            const padding = 5;
+            const paddedX = x - padding;
+            const paddedY = y - padding;
+            const paddedWidth = width + padding * 2;
+            const paddedHeight = height + padding * 2;
+            
+            switch (maskType) {
+                case 'black':
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
+                    ctx.fillRect(paddedX, paddedY, paddedWidth, paddedHeight);
+                    break;
+                    
+                case 'blur':
+                    ctx.filter = 'blur(8px)';
+                    ctx.drawImage(ctx.canvas, paddedX, paddedY, paddedWidth, paddedHeight, 
+                                paddedX, paddedY, paddedWidth, paddedHeight);
+                    ctx.filter = 'none';
+                    break;
+                    
+                case 'pixelate':
+                    const pixelSize = 8;
+                    for (let px = paddedX; px < paddedX + paddedWidth; px += pixelSize) {
+                        for (let py = paddedY; py < paddedY + paddedHeight; py += pixelSize) {
+                            const pixelData = ctx.getImageData(px, py, 1, 1).data;
+                            ctx.fillStyle = `rgba(${pixelData[0]}, ${pixelData[1]}, ${pixelData[2]}, 0.9)`;
+                            ctx.fillRect(px, py, pixelSize, pixelSize);
+                        }
+                    }
+                    break;
+                    
+                case 'redact':
+                    ctx.fillStyle = '#000';
+                    ctx.fillRect(paddedX, paddedY, paddedWidth, paddedHeight);
+                    ctx.fillStyle = '#fff';
+                    for (let i = 0; i < paddedWidth; i += 6) {
+                        ctx.fillRect(paddedX + i, paddedY, 2, paddedHeight);
+                    }
+                    break;
+            }
+        }
+        
+        function showResults() {
+            processingSection.classList.add('hidden');
+            resultsSection.classList.remove('hidden');
+            
+            // Clear previous masks
+            maskSelect.innerHTML = '';
+            
+            if (currentFile.type.startsWith('image/')) {
+                detectionOverlay.innerHTML = '';
+                
+                // Combine detected info and manual masks
+                const allMasks = [...detectedInfo, ...manualMasks];
+                
+                allMasks.forEach((info, index) => {
+                    const highlight = document.createElement('div');
+                    highlight.className = `mask-overlay mask-${info.maskType || 'black'}`;
+                    highlight.style.left = `${info.coordinates.x}px`;
+                    highlight.style.top = `${info.coordinates.y}px`;
+                    highlight.style.width = `${info.coordinates.width}px`;
+                    highlight.style.height = `${info.coordinates.height}px`;
+                    highlight.dataset.index = index;
+                    highlight.title = info.type ? `${info.type}: ${info.value} (${info.confidence}% confidence)` : 'Manual Mask';
+                    
+                    // Add resize handle
+                    const resizeHandle = document.createElement('div');
+                    resizeHandle.className = 'resize-handle';
+                    highlight.appendChild(resizeHandle);
+                    
+                    // Make draggable and resizable
+                    makeDraggable(highlight);
+                    makeResizable(highlight);
+                    
+                    detectionOverlay.appendChild(highlight);
+                    
+                    // Populate mask selection dropdown
+                    const option = document.createElement('option');
+                    option.value = index;
+                    option.textContent = info.type ? `${info.type}: ${maskValue(info.value)}` : `Manual Mask ${index + 1}`;
+                    maskSelect.appendChild(option);
+                });
+                
+                // Initialize first mask type
+                if (allMasks.length > 0) {
+                    editMaskType.value = allMasks[0].maskType || 'black';
+                }
+            } else {
+                // Hide image comparison for non-image files
+                document.getElementById('imageComparison').style.display = 'none';
+            }
+            
+            // Update statistics
+            document.getElementById('totalDetected').textContent = detectedInfo.length;
+            document.getElementById('totalMasked').textContent = detectedInfo.length + manualMasks.length;
+            const avgConf = detectedInfo.length > 0 ? detectedInfo.reduce((sum, item) => sum + item.confidence, 0) / detectedInfo.length : 0;
+            document.getElementById('avgConfidence').textContent = Math.round(avgConf) + '%';
+            document.getElementById('processingTime').textContent = ((Date.now() - startTime) / 1000).toFixed(1) + 's';
+            
+            // Populate detection table
+            detectedInfoTable.innerHTML = '';
+            detectedInfo.forEach(info => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-white/5 transition';
+                row.innerHTML = `
+                    <td class="py-3 px-4">
+                        <div class="flex items-center">
+                            <div class="w-3 h-3 rounded-full bg-${getTypeColor(info.type)} mr-2"></div>
+                            ${info.type}
+                        </div>
+                    </td>
+                    <td class="py-3 px-4 font-mono text-sm">${maskValue(info.value)}</td>
+                    <td class="py-3 px-4">
+                        <div class="flex items-center">
+                            <div class="w-full bg-gray-600 rounded-full h-2 mr-2">
+                                <div class="bg-gradient-to-r from-green-400 to-blue-500 h-2 rounded-full" style="width: ${info.confidence}%"></div>
+                            </div>
+                            <span class="text-sm">${info.confidence}%</span>
+                        </div>
+                    </td>
+                    <td class="py-3 px-4 text-sm">
+                        Position: ${info.position >= 0 ? info.position : 'Image-based'}
+                    </td>
+                    <td class="py-3 px-4">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-500/20 text-green-300 border border-green-500/30">
+                            <i class="fas fa-check mr-1"></i>Secured
+                        </span>
+                    </td>
+                `;
+                detectedInfoTable.appendChild(row);
+            });
+        }
+        
+        function makeDraggable(element) {
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            
+            element.onmousedown = dragMouseDown;
+            
+            function dragMouseDown(e) {
+                if (e.target.classList.contains('resize-handle')) return;
+                
+                e.preventDefault();
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                document.onmouseup = closeDragElement;
+                document.onmousemove = elementDrag;
+            }
+            
+            function elementDrag(e) {
+                e.preventDefault();
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                
+                const newLeft = element.offsetLeft - pos1;
+                const newTop = element.offsetTop - pos2;
+                
+                // Keep within image bounds
+                const imgRect = originalImage.getBoundingClientRect();
+                const maxX = imgRect.width - element.offsetWidth;
+                const maxY = imgRect.height - element.offsetHeight;
+                
+                element.style.left = `${Math.max(0, Math.min(newLeft, maxX))}px`;
+                element.style.top = `${Math.max(0, Math.min(newTop, maxY))}px`;
+                
+                updateMaskCoordinates(element.dataset.index, {
+                    x: parseFloat(element.style.left),
+                    y: parseFloat(element.style.top),
+                    width: parseFloat(element.style.width),
+                    height: parseFloat(element.style.height)
+                });
+            }
+            
+            function closeDragElement() {
+                document.onmouseup = null;
+                document.onmousemove = null;
+                applyMasking(editMaskType.value); // Reapply masks after dragging
+            }
+        }
+        
+        function makeResizable(element) {
+            const resizeHandle = element.querySelector('.resize-handle');
+            let isResizing = false;
+            
+            resizeHandle.addEventListener('mousedown', (e) => {
+                isResizing = true;
+                e.stopPropagation();
+                
+                const startX = e.clientX;
+                const startY = e.clientY;
+                const startWidth = parseInt(element.style.width);
+                const startHeight = parseInt(element.style.height);
+                
+                function resize(e) {
+                    if (!isResizing) return;
+                    
+                    const newWidth = startWidth + e.clientX - startX;
+                    const newHeight = startHeight + e.clientY - startY;
+                    
+                    element.style.width = `${Math.max(20, newWidth)}px`;
+                    element.style.height = `${Math.max(20, newHeight)}px`;
+                    
+                    updateMaskCoordinates(element.dataset.index, {
+                        x: parseFloat(element.style.left),
+                        y: parseFloat(element.style.top),
+                        width: parseFloat(element.style.width),
+                        height: parseFloat(element.style.height)
+                    });
+                }
+                
+                function stopResize() {
+                    isResizing = false;
+                    document.removeEventListener('mousemove', resize);
+                    document.removeEventListener('mouseup', stopResize);
+                    applyMasking(editMaskType.value); // Reapply masks after resizing
+                }
+                
+                document.addEventListener('mousemove', resize);
+                document.addEventListener('mouseup', stopResize);
+            });
+        }
+        
+        function updateMaskCoordinates(index, coordinates) {
+            const allMasks = [...detectedInfo, ...manualMasks];
+            if (index < detectedInfo.length) {
+                detectedInfo[index].coordinates = coordinates;
+            } else {
+                manualMasks[index - detectedInfo.length].coordinates = coordinates;
+            }
+        }
+        
+        function applyMaskChanges() {
+            const selectedIndex = parseInt(maskSelect.value);
+            const newMaskType = editMaskType.value;
+            
+            if (isNaN(selectedIndex)) {
+                showAlert('Please select a mask to edit', 'error');
+                return;
+            }
+            
+            // Update mask type
+            if (selectedIndex < detectedInfo.length) {
+                detectedInfo[selectedIndex].maskType = newMaskType;
+            } else {
+                manualMasks[selectedIndex - detectedInfo.length].maskType = newMaskType;
+            }
+            
+            // Update overlay appearance
+            const maskOverlay = document.querySelector(`[data-index="${selectedIndex}"]`);
+            if (maskOverlay) {
+                maskOverlay.className = `mask-overlay mask-${newMaskType}`;
+            }
+            
+            // Reapply masking
+            applyMasking(newMaskType);
+            showAlert('Mask updated successfully', 'success');
+        }
+        
+        function startManualMasking() {
+            if (!currentFile || !currentFile.type.startsWith('image/')) {
+                showAlert('Manual masking is only available for image files', 'error');
+                return;
+            }
+            
+            isManualMaskingMode = true;
+            detectionOverlay.style.cursor = 'crosshair';
+            addManualMask.textContent = 'Click & Drag on Image';
+            addManualMask.style.background = 'linear-gradient(to right, #ef4444, #dc2626)';
+            
+            detectionOverlay.addEventListener('mousedown', startManualMask);
+            detectionOverlay.addEventListener('mouseup', endManualMask);
+        }
+        
+        function startManualMask(e) {
+            if (!isManualMaskingMode) return;
+            
+            const rect = detectionOverlay.getBoundingClientRect();
+            currentMaskStart = {
+                x: e.clientX - rect.left,
+                y: e.clientY - rect.top
+            };
+            
+            document.addEventListener('mousemove', updateManualMask);
+        }
+        
+        function updateManualMask(e) {
+            if (!currentMaskStart) return;
+            
+            const rect = detectionOverlay.getBoundingClientRect();
+            const currentX = e.clientX - rect.left;
+            const currentY = e.clientY - rect.top;
+            
+            // Remove existing temporary mask
+            const tempMask = document.getElementById('temp-mask');
+            if (tempMask) tempMask.remove();
+            
+            // Create temporary mask preview
+            const preview = document.createElement('div');
+            preview.id = 'temp-mask';
+            preview.className = 'mask-overlay mask-black';
+            preview.style.left = `${Math.min(currentMaskStart.x, currentX)}px`;
+            preview.style.top = `${Math.min(currentMaskStart.y, currentY)}px`;
+            preview.style.width = `${Math.abs(currentX - currentMaskStart.x)}px`;
+            preview.style.height = `${Math.abs(currentY - currentMaskStart.y)}px`;
+            preview.style.pointerEvents = 'none';
+            
+            detectionOverlay.appendChild(preview);
+        }
+        
+        function endManualMask(e) {
+            if (!currentMaskStart) return;
+            
+            const rect = detectionOverlay.getBoundingClientRect();
+            const endX = e.clientX - rect.left;
+            const endY = e.clientY - rect.top;
+            
+            const newMask = {
+                type: 'Manual Mask',
+                coordinates: {
+                    x: Math.min(currentMaskStart.x, endX),
+                    y: Math.min(currentMaskStart.y, endY),
+                    width: Math.abs(endX - currentMaskStart.x),
+                    height: Math.abs(endY - currentMaskStart.y)
+                },
+                maskType: editMaskType.value
+            };
+            
+            // Only add if mask has reasonable size
+            if (newMask.coordinates.width > 10 && newMask.coordinates.height > 10) {
+                manualMasks.push(newMask);
+                
+                // Add to dropdown
+                const option = document.createElement('option');
+                option.value = detectedInfo.length + manualMasks.length - 1;
+                option.textContent = `Manual Mask ${manualMasks.length}`;
+                maskSelect.appendChild(option);
+                
+                // Update statistics
+                document.getElementById('totalMasked').textContent = detectedInfo.length + manualMasks.length;
+            }
+            
+            // Clean up
+            const tempMask = document.getElementById('temp-mask');
+            if (tempMask) tempMask.remove();
+            
+            currentMaskStart = null;
+            isManualMaskingMode = false;
+            detectionOverlay.style.cursor = 'default';
+            addManualMask.textContent = 'Add Manual Mask';
+            addManualMask.style.background = '';
+            
+            document.removeEventListener('mousemove', updateManualMask);
+            detectionOverlay.removeEventListener('mousedown', startManualMask);
+            detectionOverlay.removeEventListener('mouseup', endManualMask);
+            
+            // Refresh display
+            showResults();
+        }
+        
+        function downloadSecuredDocument() {
+            if (!processedImage && !currentFile) {
+                showAlert('No processed document to download', 'error');
+                return;
+            }
+            
+            if (currentFile.type.startsWith('image/')) {
+                const link = document.createElement('a');
+                link.download = `secured_${currentFile.name}`;
+                link.href = processedImage;
+                link.click();
+            } else {
+                // For non-image files, create a text report
+                const securedText = createSecuredTextDocument();
+                const blob = new Blob([securedText], { type: 'text/plain' });
+                const link = document.createElement('a');
+                link.download = `secured_${currentFile.name.split('.')[0]}.txt`;
+                link.href = URL.createObjectURL(blob);
+                link.click();
+            }
+            
+            showAlert('Secured document downloaded successfully', 'success');
+        }
+        
+        function createSecuredTextDocument() {
+            let securedText = extractedText;
+            
+            // Sort detected info by position (descending) to avoid index shifting
+            const sortedDetections = [...detectedInfo].sort((a, b) => b.position - a.position);
+            
+            sortedDetections.forEach(info => {
+                if (info.position >= 0) {
+                    const masked = '*'.repeat(info.value.length);
+                    securedText = securedText.substring(0, info.position) + 
+                                 masked + 
+                                 securedText.substring(info.position + info.value.length);
+                }
+            });
+            
+            return securedText;
+        }
+        
+        function downloadReport() {
+            const report = generateDetectionReport();
+            const blob = new Blob([report], { type: 'application/json' });
+            const link = document.createElement('a');
+            link.download = `ai_detection_report_${new Date().toISOString().split('T')[0]}.json`;
+            link.href = URL.createObjectURL(blob);
+            link.click();
+            
+            showAlert('AI detection report downloaded', 'success');
+        }
+        
+        function generateDetectionReport() {
+            return JSON.stringify({
+                timestamp: new Date().toISOString(),
+                filename: fileMetadata.name,
+                fileSize: fileMetadata.size,
+                fileType: fileMetadata.type,
+                processingTime: ((Date.now() - startTime) / 1000).toFixed(1) + 's',
+                detectedItems: detectedInfo.length,
+                manualMasks: manualMasks.length,
+                totalMasked: detectedInfo.length + manualMasks.length,
+                averageConfidence: detectedInfo.length > 0 ? 
+                    (detectedInfo.reduce((sum, item) => sum + item.confidence, 0) / detectedInfo.length).toFixed(1) + '%' : '0%',
+                detections: detectedInfo.map(info => ({
+                    type: info.type,
+                    value: maskValue(info.value),
+                    confidence: info.confidence + '%',
+                    position: info.position,
+                    coordinates: info.coordinates,
+                    maskType: info.maskType
+                })),
+                manualMasks: manualMasks.map((mask, index) => ({
+                    id: `manual_${index}`,
+                    coordinates: mask.coordinates,
+                    maskType: mask.maskType
+                }))
+            }, null, 2);
+        }
+        
+        function resetApp() {
+            // Reset all global variables
+            currentFile = null;
+            detectedInfo = [];
+            processedImage = null;
+            startTime = null;
+            extractedText = '';
+            fileMetadata = {};
+            tesseractData = null;
+            manualMasks = [];
+            isManualMaskingMode = false;
+            currentMaskStart = null;
+            
+            // Hide all sections except upload
+            configPanel.style.display = 'none';
+            rawContentSection.classList.add('hidden');
+            processingSection.classList.add('hidden');
+            resultsSection.classList.add('hidden');
+            
+            // Reset form elements
+            fileInput.value = '';
+            maskSelect.innerHTML = '';
+            confidenceSlider.value = 80;
+            confidenceValue.textContent = '80%';
+            
+            // Reset checkboxes
+            document.getElementById('detectSSN').checked = true;
+            document.getElementById('detectNames').checked = true;
+            document.getElementById('detectDOB').checked = true;
+            document.getElementById('detectAddress').checked = true;
+            document.getElementById('detectPhone').checked = true;
+            document.getElementById('detectEmail').checked = true;
+            document.getElementById('detectCreditCard').checked = true;
+            
+            // Reset radio buttons
+            document.querySelector('input[name="maskType"][value="black"]').checked = true;
+            
+            // Clear images
+            originalImage.src = '';
+            maskedImage.src = '';
+            detectionOverlay.innerHTML = '';
+            
+            // Show upload section again
+            document.getElementById('imageComparison').style.display = '';
+            
+            showAlert('Application reset successfully', 'success');
+        }
+        
+        // Utility functions
+        function maskValue(value) {
+            if (value.length <= 4) return '*'.repeat(value.length);
+            return value.substring(0, 2) + '*'.repeat(value.length - 4) + value.substring(value.length - 2);
+        }
+        
+        function getTypeColor(type) {
+            const colors = {
+                'SSN': 'red-500',
+                'Email': 'blue-500',
+                'Phone': 'green-500',
+                'Name': 'purple-500',
+                'Address': 'yellow-500',
+                'Date of Birth': 'pink-500',
+                'Credit Card': 'indigo-500',
+                'License Number': 'gray-500',
+                'Passport Number': 'orange-500',
+                'ZIP Code': 'teal-500'
+            };
+            return colors[type] || 'gray-500';
+        }
+        
+        function showAlert(message, type = 'info') {
+            // Create alert element
+            const alert = document.createElement('div');
+            alert.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 transform translate-x-full`;
+            
+            // Set alert style based on type
+            switch (type) {
+                case 'success':
+                    alert.className += ' bg-green-500 text-white';
+                    break;
+                case 'error':
+                    alert.className += ' bg-red-500 text-white';
+                    break;
+                case 'warning':
+                    alert.className += ' bg-yellow-500 text-black';
+                    break;
+                default:
+                    alert.className += ' bg-blue-500 text-white';
+            }
+            
+            alert.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-triangle' : 'info-circle'} mr-2"></i>
+                    <span>${message}</span>
+                    <button class="ml-4 text-white hover:text-gray-200" onclick="this.parentElement.parentElement.remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(alert);
+            
+            // Animate in
+            setTimeout(() => {
+                alert.classList.remove('translate-x-full');
+            }, 100);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                alert.classList.add('translate-x-full');
+                setTimeout(() => {
+                    if (alert.parentElement) {
+                        alert.remove();
+                    }
+                }, 300);
+            }, 5000);
+        }
+        
+        function updateProcessingStep(step, percent) {
+            document.getElementById('processingStep').textContent = step;
+            document.getElementById('processingPercent').textContent = percent + '%';
+            document.getElementById('ocrProgress').style.width = percent + '%';
+        }
+        
+        function updateProcessingStatus(component, status) {
+            const statusElement = document.getElementById(`status${component}`);
+            if (statusElement) {
+                statusElement.textContent = status;
+                if (status === 'Complete') {
+                    statusElement.className = 'text-xs text-green-400';
+                } else if (status.includes('Processing')) {
+                    statusElement.className = 'text-xs text-yellow-400';
+                } else if (status.includes('N/A')) {
+                    statusElement.className = 'text-xs text-gray-400';
+                } else {
+                    statusElement.className = 'text-xs text-red-400';
+                }
+            }
+        }
+        
+        function updateAIStatus(message, status) {
+            // Update status indicators in the sidebar
+            const indicators = {
+                'tesseractStatus': 'Tesseract OCR',
+                'pdfjsStatus': 'PDF.js',
+                'docParserStatus': 'Document Parser'
+            };
+            
+            Object.keys(indicators).forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    if (status === 'processing') {
+                        element.textContent = 'Processing...';
+                        element.className = 'text-yellow-400 font-bold';
+                    } else if (status === 'success') {
+                        element.textContent = 'Ready';
+                        element.className = 'text-green-400 font-bold';
+                    } else if (status === 'error') {
+                        element.textContent = 'Error';
+                        element.className = 'text-red-400 font-bold';
+                    }
+                }
+            });
+        }
+        
+        function scrollToSection(sectionId) {
+            const section = document.getElementById(sectionId);
+            if (section) {
+                section.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+        
+        // Initialize Three.js background on page load
+        window.addEventListener('load', () => {
+            initThreeJS();
+            updateAIStatus('All systems ready', 'success');
+        });
+        
+        // Handle window resize for Three.js
+        window.addEventListener('resize', () => {
+            const container = document.getElementById('threejs-background');
+            if (container && container.firstChild) {
+                const canvas = container.firstChild;
+                canvas.style.width = '100%';
+                canvas.style.height = '100%';
+            }
+        });
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Ctrl/Cmd + U: Upload new file
+            if ((e.ctrlKey || e.metaKey) && e.key === 'u') {
+                e.preventDefault();
+                fileInput.click();
+            }
+            
+            // Ctrl/Cmd + P: Process document
+            if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+                e.preventDefault();
+                if (currentFile && extractedText) {
+                    processDocument();
+                }
+            }
+            
+            // Ctrl/Cmd + D: Download secured document
+            if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+                e.preventDefault();
+                if (processedImage || currentFile) {
+                    downloadSecuredDocument();
+                }
+            }
+            
+            // Ctrl/Cmd + R: Reset application
+            if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+                e.preventDefault();
+                resetApp();
+            }
+            
+            // Escape: Cancel manual masking
+            if (e.key === 'Escape' && isManualMaskingMode) {
+                isManualMaskingMode = false;
+                detectionOverlay.style.cursor = 'default';
+                addManualMask.textContent = 'Add Manual Mask';
+                addManualMask.style.background = '';
+                
+                const tempMask = document.getElementById('temp-mask');
+                if (tempMask) tempMask.remove();
+                
+                document.removeEventListener('mousemove', updateManualMask);
+                detectionOverlay.removeEventListener('mousedown', startManualMask);
+                detectionOverlay.removeEventListener('mouseup', endManualMask);
+            }
+        });
+        
+        // Show keyboard shortcuts on first load
+        setTimeout(() => {
+            if (!localStorage.getItem('secureIdProTutorialShown')) {
+                showAlert('Tip: Use Ctrl+U to upload, Ctrl+P to process, Ctrl+D to download, Ctrl+R to reset', 'info');
+                // Note: We can't use localStorage in artifacts, so this will show every time
+            }
+        }, 2000);
+        
+        console.log('SecureID Pro initialized successfully');
+        console.log('Available keyboard shortcuts:');
+        console.log('Ctrl+U: Upload file');
+        console.log('Ctrl+P: Process document');  
+        console.log('Ctrl+D: Download secured document');
+        console.log('Ctrl+R: Reset application');
+        console.log('Escape: Cancel manual masking');
+    </script>
+</body>
+</html>

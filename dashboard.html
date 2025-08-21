@@ -1,0 +1,2104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureID Pro - Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.2/tesseract.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --electric-blue: #1E90FF;
+            --gold: #FFD700;
+            --gold-secondary: #FFC300;
+            --teal-blue: #007B8A;
+            --cyan: #00BCD4;
+            --deep-purple: #4B0082;
+            --navy-blue: #1F2F46;
+            --dark-charcoal: #1A1A1A;
+            --jet-black: #121212;
+            --platinum-white: #F8F8FF;
+
+            --text-main: var(--platinum-white);
+            --text-accent: var(--gold);
+            --background-main: var(--navy-blue);
+            --background-dark: var(--dark-charcoal);
+            --button-bg: var(--electric-blue);
+            --button-hover: var(--gold);
+            --accent: var(--teal-blue);
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(-100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes countUp {
+            from { transform: scale(0.5); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        
+        .floating { animation: float 3s ease-in-out infinite; }
+        .pulsing { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        .slide-in { animation: slideIn 0.5s ease-out; }
+        .count-up { animation: countUp 0.8s ease-out; }
+        
+        .btn-3d {
+            position: relative;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 0 0 rgba(0,0,0,0.2);
+        }
+        
+        .btn-3d:active {
+            transform: translateY(5px);
+            box-shadow: 0 2px 0 0 rgba(0,0,0,0.2);
+        }
+        
+        .progress-bar {
+            height: 6px;
+            background: linear-gradient(90deg, var(--electric-blue), var(--deep-purple), var(--teal-blue));
+            transition: width 0.3s ease;
+            border-radius: 3px;
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(30, 144, 255, 0.2);
+        }
+        
+        .glass-effect {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .neon-border {
+            box-shadow: 0 0 5px rgba(30, 144, 255, 0.5), 
+                       0 0 20px rgba(30, 144, 255, 0.3), 
+                       0 0 35px rgba(30, 144, 255, 0.1);
+        }
+
+        .sidebar {
+            background: var(--dark-charcoal);
+            border-right: 1px solid var(--teal-blue);
+        }
+
+        .badge {
+            background: var(--gold);
+            color: var(--jet-black);
+        }
+
+        body {
+            background: var(--background-dark);
+            color: var(--text-main);
+        }
+
+        .bg-gradient-to-br {
+            background-image: linear-gradient(to bottom right, var(--background-dark), var(--background-main));
+        }
+
+        .text-accent {
+            color: var(--text-accent);
+        }
+
+        .bg-accent {
+            background-color: var(--accent);
+        }
+
+        .btn-primary {
+            background-color: var(--button-bg);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--button-hover);
+        }
+
+        #threejs-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.2;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        .status-success { background-color: #10B981; }
+        .status-warning { background-color: #F59E0B; }
+        .status-error { background-color: #EF4444; }
+        .status-processing { background-color: #3B82F6; animation: pulse 2s infinite; }
+
+        .metric-card {
+            background: linear-gradient(135deg, rgba(30, 144, 255, 0.2) 0%, rgba(75, 0, 130, 0.2) 100%);
+            border: 1px solid rgba(30, 144, 255, 0.3);
+        }
+
+        .activity-item {
+            border-left: 3px solid var(--electric-blue);
+            transition: all 0.3s ease;
+        }
+
+        .activity-item:hover {
+            border-left-color: var(--gold);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in-up {
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+
+        .table-hover:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: scale(1.01);
+        }
+
+        .upload-zone {
+            border: 2px dashed var(--electric-blue);
+            transition: all 0.3s ease;
+        }
+
+        .upload-zone:hover {
+            border-color: var(--gold);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .upload-zone.dragover {
+            border-color: var(--gold);
+            background: rgba(255, 215, 0, 0.1);
+        }
+
+        .processing-overlay {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+        }
+
+        .extracted-data {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .confidence-high { color: #10B981; }
+        .confidence-medium { color: #F59E0B; }
+        .confidence-low { color: #EF4444; }
+
+        .file-thumbnail {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            object-fit: cover;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br">
+    <!-- Three.js Background -->
+    <div id="threejs-background"></div>
+
+    <!-- Processing Overlay -->
+    <div id="processingOverlay" class="fixed inset-0 z-50 processing-overlay hidden flex items-center justify-center">
+        <div class="text-center">
+            <div class="w-16 h-16 border-4 border-blue-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <h3 class="text-xl font-bold mb-2">Processing Document...</h3>
+            <p class="text-gray-300" id="processingStatus">Extracting text and analyzing content...</p>
+            <div class="mt-4 w-64 bg-gray-700 rounded-full h-2">
+                <div id="processingProgress" class="bg-blue-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="app" class="relative z-10">
+        <!-- Header -->
+        <header class="glass-effect shadow-2xl border-b border-white/10">
+            <div class="container mx-auto px-4 py-6">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <div class="flex items-center mb-4 md:mb-0">
+                        <i class="fas fa-shield-halved text-4xl mr-3 floating text-accent"></i>
+                        <div>
+                            <h1 class="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                                SecureID Pro
+                            </h1>
+                            <p class="text-sm" style="color: var(--text-main);">Dashboard - Security Overview</p>
+                        </div>
+                    </div>
+                    <nav class="flex space-x-4 items-center">
+                        <a href="secureID.html" class="px-4 py-2 rounded-lg glass-effect hover:bg-white/20 transition flex items-center bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600">
+                            <i class="fas fa-home mr-2"></i>Home
+                        </a>
+                        <a href="#" class="px-4 py-2 rounded-lg glass-effect bg-white/20 transition flex items-center">
+                            <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+                        </a>
+                        <button onclick="openUploadModal()" class="px-4 py-2 rounded-lg glass-effect hover:bg-white/20 transition flex items-center">
+                            <i class="fas fa-upload mr-2"></i>New Scan
+                        </button>
+                        <a href="Settings.html" class="px-4 py-2 rounded-lg glass-effect hover:bg-white/20 transition flex items-center">
+                            <i class="fas fa-cog mr-2"></i>Settings
+                        </a>
+                    </nav>
+                </div>
+            </div>
+        </header>
+
+        <!-- Upload Modal -->
+        <div id="uploadModal" class="fixed inset-0 z-40 hidden">
+            <div class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm" onclick="closeUploadModal()"></div>
+            <div class="fixed inset-0 flex items-center justify-center p-4">
+                <div class="glass-effect rounded-xl p-6 max-w-lg w-full">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold">Upload Document</h3>
+                        <button onclick="closeUploadModal()" class="text-gray-400 hover:text-white">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    
+                    <div id="uploadZone" class="upload-zone rounded-lg p-8 text-center">
+                        <i class="fas fa-cloud-upload-alt text-4xl text-blue-400 mb-4"></i>
+                        <p class="text-lg mb-2">Drop files here or click to browse</p>
+                        <p class="text-sm text-gray-400 mb-4">Supports: JPG, PNG, PDF, TXT</p>
+                        <input type="file" id="fileInput" class="hidden" accept=".jpg,.jpeg,.png,.pdf,.txt" multiple>
+                        <button onclick="document.getElementById('fileInput').click()" class="btn-primary px-6 py-2 rounded-lg">
+                            Choose Files
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <main class="container mx-auto px-4 py-8 flex">
+            <!-- Sidebar -->
+            <div class="sidebar w-64 hidden md:block mr-8 rounded-lg p-4 glass-effect">
+                <h3 class="text-lg font-bold mb-4 text-accent">Navigation</h3>
+                <ul class="space-y-2">
+                    <li><a href="dashboard.html" class="block px-3 py-2 rounded bg-white/10 transition">
+                        <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+                    </a></li>
+                    </a></li>
+                    <li><a href="Settings.html" class="block px-3 py-2 rounded hover:bg-white/10 transition">
+                        <i class="fas fa-cog mr-2"></i>Settings
+                    </a></li>
+                    </a></li>
+                </ul>
+                
+                <div class="mt-8">
+                    <h3 class="text-lg font-bold mb-4 text-accent">Quick Links</h3>
+                    <button onclick="scrollToSection('welcome-section')" class="w-full py-2 rounded-lg mb-2 btn-3d glass-effect hover:bg-white/20 transition flex items-center">
+                        <i class="fas fa-user mr-2"></i>Welcome
+                    </button>
+                    <button onclick="scrollToSection('metrics-section')" class="w-full py-2 rounded-lg mb-2 btn-3d glass-effect hover:bg-white/20 transition flex items-center">
+                        <i class="fas fa-chart-bar mr-2"></i>Metrics
+                    </button>
+                    <button onclick="scrollToSection('charts-section')" class="w-full py-2 rounded-lg mb-2 btn-3d glass-effect hover:bg-white/20 transition flex items-center">
+                        <i class="fas fa-chart-pie mr-2"></i>Charts
+                    </button>
+                    <button onclick="scrollToSection('activity-section')" class="w-full py-2 rounded-lg mb-2 btn-3d glass-effect hover:bg-white/20 transition flex items-center">
+                        <i class="fas fa-clock mr-2"></i>Activity
+                    </button>
+                    <button onclick="scrollToSection('documents-section')" class="w-full py-2 rounded-lg btn-3d glass-effect hover:bg-white/20 transition flex items-center">
+                        <i class="fas fa-file-alt mr-2"></i>Documents
+                    </button>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="mt-8 p-4 glass-effect rounded-lg">
+                    <h4 class="text-sm font-bold mb-3 text-accent">Today's Activity</h4>
+                    <div class="space-y-2 text-sm" id="todayStats">
+                        <div class="flex justify-between">
+                            <span>Documents Processed:</span>
+                            <span class="text-green-400 font-bold" id="todayDocs">0</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Data Points Secured:</span>
+                            <span class="text-blue-400 font-bold" id="todayDataPoints">0</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Average Confidence:</span>
+                            <span class="text-purple-400 font-bold" id="todayConfidence">--%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex-1">
+                <!-- Welcome Section -->
+                <div id="welcome-section" class="mb-8 fade-in-up">
+                    <div class="glass-effect rounded-xl p-6 neon-border">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h2 class="text-2xl font-bold mb-2">Welcome back, User!</h2>
+                                <p class="text-gray-300">Here's your security overview for today</p>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-sm text-gray-400">Last Login</div>
+                                <div class="text-accent font-semibold" id="lastLogin">Today, 09:45 AM</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Key Metrics -->
+                <div id="metrics-section" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <!-- Total Documents -->
+                    <div class="metric-card glass-effect rounded-xl p-6 card-hover fade-in-up">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-400 mb-1">Total Documents</p>
+                                <p class="text-3xl font-bold count-up" id="totalDocs">0</p>
+                                <p class="text-xs text-green-400 mt-1" id="docsChange">
+                                    <i class="fas fa-info-circle mr-1"></i>Upload documents to see data
+                                </p>
+                            </div>
+                            <div class="text-4xl text-blue-400">
+                                <i class="fas fa-file-shield floating"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Data Points Secured -->
+                    <div class="metric-card glass-effect rounded-xl p-6 card-hover fade-in-up" style="animation-delay: 0.1s">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-400 mb-1">Data Points Secured</p>
+                                <p class="text-3xl font-bold count-up" id="dataSecured">0</p>
+                                <p class="text-xs text-blue-400 mt-1" id="dataChange">
+                                    <i class="fas fa-info-circle mr-1"></i>Real extractions only
+                                </p>
+                            </div>
+                            <div class="text-4xl text-green-400">
+                                <i class="fas fa-lock floating"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Average Confidence -->
+                    <div class="metric-card glass-effect rounded-xl p-6 card-hover fade-in-up" style="animation-delay: 0.2s">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-400 mb-1">Avg Confidence</p>
+                                <p class="text-3xl font-bold count-up" id="avgConfidence">--%</p>
+                                <p class="text-xs text-purple-400 mt-1" id="confidenceChange">
+                                    <i class="fas fa-info-circle mr-1"></i>Based on AI analysis
+                                </p>
+                            </div>
+                            <div class="text-4xl text-purple-400">
+                                <i class="fas fa-brain floating"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Processing Time -->
+                    <div class="metric-card glass-effect rounded-xl p-6 card-hover fade-in-up" style="animation-delay: 0.3s">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-400 mb-1">Avg Processing</p>
+                                <p class="text-3xl font-bold count-up" id="avgProcessing">--s</p>
+                                <p class="text-xs text-cyan-400 mt-1" id="processingChange">
+                                    <i class="fas fa-info-circle mr-1"></i>Real processing times
+                                </p>
+                            </div>
+                            <div class="text-4xl text-cyan-400">
+                                <i class="fas fa-stopwatch floating"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div id="charts-section" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    <!-- Processing Activity Chart -->
+                    <div class="glass-effect rounded-xl p-6 fade-in-up">
+                        <h3 class="text-xl font-bold mb-4 flex items-center">
+                            <i class="fas fa-chart-line text-blue-400 mr-2"></i>
+                            Processing Activity
+                        </h3>
+                        <div class="chart-container">
+                            <canvas id="activityChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Detection Types Chart -->
+                    <div class="glass-effect rounded-xl p-6 fade-in-up">
+                        <h3 class="text-xl font-bold mb-4 flex items-center">
+                            <i class="fas fa-chart-pie text-purple-400 mr-2"></i>
+                            Detection Types
+                        </h3>
+                        <div class="chart-container">
+                            <canvas id="detectionChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity & Document List -->
+                <div id="activity-section" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    <!-- Recent Activity -->
+                    <div class="glass-effect rounded-xl p-6 fade-in-up">
+                        <h3 class="text-xl font-bold mb-4 flex items-center">
+                            <i class="fas fa-clock text-green-400 mr-2"></i>
+                            Recent Activity
+                        </h3>
+                        <div class="space-y-4" id="recentActivity">
+                            <div class="text-center text-gray-400 py-8">
+                                <i class="fas fa-upload text-4xl mb-4"></i>
+                                <p>Upload documents to see activity</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- System Status -->
+                    <div class="glass-effect rounded-xl p-6 fade-in-up">
+                        <h3 class="text-xl font-bold mb-4 flex items-center">
+                            <i class="fas fa-server text-cyan-400 mr-2"></i>
+                            System Status
+                        </h3>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <span>OCR Engine</span>
+                                <div class="flex items-center">
+                                    <span class="status-dot status-success"></span>
+                                    <span class="text-green-400 text-sm">Ready</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span>AI Analysis</span>
+                                <div class="flex items-center">
+                                    <span class="status-dot status-success"></span>
+                                    <span class="text-green-400 text-sm">Online</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span>Document Parser</span>
+                                <div class="flex items-center">
+                                    <span class="status-dot status-success"></span>
+                                    <span class="text-green-400 text-sm">Active</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span>Data Extraction</span>
+                                <div class="flex items-center">
+                                    <span class="status-dot status-success"></span>
+                                    <span class="text-green-400 text-sm">Ready</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Documents Table -->
+                <div id="documents-section" class="glass-effect rounded-xl p-6 fade-in-up">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-xl font-bold flex items-center">
+                            <i class="fas fa-file-alt text-blue-400 mr-2"></i>
+                            Processed Documents
+                        </h3>
+                        <button onclick="openUploadModal()" class="text-accent hover:underline text-sm">
+                            <i class="fas fa-plus mr-1"></i>Upload New Document
+                        </button>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full">
+                            <thead>
+                                <tr class="border-b border-gray-700">
+                                    <th class="text-left py-3 px-4 text-sm font-medium text-gray-400">Document</th>
+                                    <th class="text-left py-3 px-4 text-sm font-medium text-gray-400">Type</th>
+                                    <th class="text-left py-3 px-4 text-sm font-medium text-gray-400">Data Extracted</th>
+                                    <th class="text-left py-3 px-4 text-sm font-medium text-gray-400">Confidence</th>
+                                    <th class="text-left py-3 px-4 text-sm font-medium text-gray-400">Status</th>
+                                    <th class="text-left py-3 px-4 text-sm font-medium text-gray-400">Date</th>
+                                    <th class="text-left py-3 px-4 text-sm font-medium text-gray-400">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="documentsTable" class="divide-y divide-gray-700">
+                                <tr>
+                                    <td colspan="7" class="text-center text-gray-400 py-8">
+                                        <i class="fas fa-file-upload text-4xl mb-4"></i>
+                                        <p>No documents processed yet. Upload your first document to get started!</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="glass-effect mt-16 border-t border-white/10">
+            <div class="container mx-auto px-4 py-8">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <div class="mb-6 md:mb-0">
+                        <div class="flex items-center mb-2">
+                            <i class="fas fa-shield-halved text-2xl mr-2 text-blue-400"></i>
+                            <span class="text-xl font-bold">SecureID Pro</span>
+                        </div>
+                        <p class="text-gray-400">Advanced privacy protection for the digital age.</p>
+                    </div>
+                    <div class="flex space-x-6">
+                        <a href="#" class="text-gray-400 hover:text-white transition">
+                            <i class="fab fa-github text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition">
+                            <i class="fab fa-linkedin text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition">
+                            <i class="fab fa-twitter text-xl"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="border-t border-gray-700 mt-6 pt-6 text-center text-gray-400 text-sm">
+                    <p>&copy; 2024 SecureID Pro. All rights reserved. | Dashboard v2.0 - Real Data Edition</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // IndexedDB Database Manager
+        class DatabaseManager {
+            constructor() {
+                this.dbName = 'SecureIDProDB';
+                this.version = 1;
+                this.db = null;
+            }
+
+            async init() {
+                return new Promise((resolve, reject) => {
+                    const request = indexedDB.open(this.dbName, this.version);
+
+                    request.onerror = () => reject(request.error);
+
+                    request.onsuccess = () => {
+                        this.db = request.result;
+                        resolve(this.db);
+                    };
+
+                    request.onupgradeneeded = (event) => {
+                        const db = event.target.result;
+
+                        // Create documents store
+                        if (!db.objectStoreNames.contains('documents')) {
+                            const documentsStore = db.createObjectStore('documents', { keyPath: 'id' });
+                            documentsStore.createIndex('uploadDate', 'uploadDate', { unique: false });
+                            documentsStore.createIndex('type', 'type', { unique: false });
+                        }
+
+                        // Create files store for actual file data
+                        if (!db.objectStoreNames.contains('files')) {
+                            const filesStore = db.createObjectStore('files', { keyPath: 'id' });
+                        }
+
+                        // Create extracted data store
+                        if (!db.objectStoreNames.contains('extractedData')) {
+                            const extractedDataStore = db.createObjectStore('extractedData', { keyPath: 'id', autoIncrement: true });
+                            extractedDataStore.createIndex('documentId', 'documentId', { unique: false });
+                            extractedDataStore.createIndex('type', 'type', { unique: false });
+                        }
+
+                        // Create activity store
+                        if (!db.objectStoreNames.contains('activity')) {
+                            const activityStore = db.createObjectStore('activity', { keyPath: 'id', autoIncrement: true });
+                            activityStore.createIndex('date', 'date', { unique: false });
+                        }
+                    };
+                });
+            }
+
+            async saveDocument(documentData) {
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction(['documents'], 'readwrite');
+                    const store = transaction.objectStore('documents');
+                    const request = store.put(documentData);
+
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                });
+            }
+
+            async saveFile(fileId, fileData) {
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction(['files'], 'readwrite');
+                    const store = transaction.objectStore('files');
+                    const request = store.put({ id: fileId, data: fileData });
+
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                });
+            }
+
+            async saveExtractedData(extractedItems, documentId) {
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction(['extractedData'], 'readwrite');
+                    const store = transaction.objectStore('extractedData');
+                    
+                    const promises = extractedItems.map(item => {
+                        return new Promise((res, rej) => {
+                            const request = store.put({
+                                ...item,
+                                documentId: documentId,
+                                timestamp: new Date()
+                            });
+                            request.onsuccess = () => res(request.result);
+                            request.onerror = () => rej(request.error);
+                        });
+                    });
+
+                    Promise.all(promises).then(resolve).catch(reject);
+                });
+            }
+
+            async saveActivity(activityData) {
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction(['activity'], 'readwrite');
+                    const store = transaction.objectStore('activity');
+                    const request = store.put({
+                        ...activityData,
+                        date: new Date()
+                    });
+
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                });
+            }
+
+            async getAllDocuments() {
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction(['documents'], 'readonly');
+                    const store = transaction.objectStore('documents');
+                    const request = store.getAll();
+
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                });
+            }
+
+            async getFile(fileId) {
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction(['files'], 'readonly');
+                    const store = transaction.objectStore('files');
+                    const request = store.get(fileId);
+
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                });
+            }
+
+            async getAllExtractedData() {
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction(['extractedData'], 'readonly');
+                    const store = transaction.objectStore('extractedData');
+                    const request = store.getAll();
+
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                });
+            }
+
+            async getExtractedDataByDocument(documentId) {
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction(['extractedData'], 'readonly');
+                    const store = transaction.objectStore('extractedData');
+                    const index = store.index('documentId');
+                    const request = index.getAll(documentId);
+
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                });
+            }
+
+            async deleteDocument(documentId) {
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction(['documents', 'files', 'extractedData'], 'readwrite');
+                    
+                    // Delete document
+                    transaction.objectStore('documents').delete(documentId);
+                    
+                    // Delete file
+                    transaction.objectStore('files').delete(documentId);
+                    
+                    // Delete extracted data
+                    const extractedDataStore = transaction.objectStore('extractedData');
+                    const index = extractedDataStore.index('documentId');
+                    const request = index.getAllKeys(documentId);
+                    
+                    request.onsuccess = () => {
+                        request.result.forEach(key => {
+                            extractedDataStore.delete(key);
+                        });
+                    };
+
+                    transaction.oncomplete = () => resolve();
+                    transaction.onerror = () => reject(transaction.error);
+                });
+            }
+        }
+
+        // Global variables to store application data
+        let documents = [];
+        let extractedData = [];
+        let processingTimes = [];
+        let dailyActivity = [0, 0, 0, 0, 0, 0, 0]; // Mon-Sun
+        let detectionTypes = {
+            'Names': 0,
+            'Phone Numbers': 0,
+            'Email Addresses': 0,
+            'Addresses': 0,
+            'Dates': 0,
+            'IDs/Numbers': 0
+        };
+
+        // Initialize database
+        const dbManager = new DatabaseManager();
+
+        // Initialize PDF.js worker
+        if (typeof pdfjsLib !== 'undefined') {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        }
+
+        // Three.js Background Animation
+        function initThreeJS() {
+            const container = document.getElementById('threejs-background');
+            if (!container) return;
+            
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            // Scene
+            const scene = new THREE.Scene();
+            
+            // Camera
+            const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+            camera.position.z = 30;
+            
+            // Renderer
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(width, height);
+            container.appendChild(renderer.domElement);
+            
+            // Particles
+            const particlesGeometry = new THREE.BufferGeometry();
+            const particleCount = 800;
+            
+            const posArray = new Float32Array(particleCount * 3);
+            const colorArray = new Float32Array(particleCount * 3);
+            
+            for(let i = 0; i < particleCount * 3; i++) {
+                posArray[i] = (Math.random() - 0.5) * 80;
+                colorArray[i] = Math.random();
+            }
+            
+            particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+            particlesGeometry.setAttribute('color', new THREE.BufferAttribute(colorArray, 3));
+            
+            const particlesMaterial = new THREE.PointsMaterial({
+                size: 0.3,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.6,
+                blending: THREE.AdditiveBlending
+            });
+            
+            const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+            scene.add(particlesMesh);
+            
+            // Animated shapes
+            const geometry = new THREE.IcosahedronGeometry(8, 0);
+            const material = new THREE.MeshBasicMaterial({ 
+                color: 0x007B8A,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.3
+            });
+            const icosahedron = new THREE.Mesh(geometry, material);
+            scene.add(icosahedron);
+            
+            // Animation loop
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                particlesMesh.rotation.x += 0.0003;
+                particlesMesh.rotation.y += 0.0007;
+                
+                icosahedron.rotation.x += 0.003;
+                icosahedron.rotation.y += 0.007;
+                
+                renderer.render(scene, camera);
+            }
+            
+            // Handle resize
+            window.addEventListener('resize', () => {
+                const width = container.clientWidth;
+                const height = container.clientHeight;
+                
+                camera.aspect = width / height;
+                camera.updateProjectionMatrix();
+                renderer.setSize(width, height);
+            });
+            
+            animate();
+        }
+
+        // Data extraction patterns
+        const extractionPatterns = {
+            names: /\b[A-Z][a-z]{2,}\s+[A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,})?\b/g,
+            phoneNumbers: /(?:\+?1[-.\s]?)?\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}/g,
+            emails: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g,
+            addresses: /\d+\s+[A-Za-z\s]+(?:Street|St\.?|Avenue|Ave\.?|Road|Rd\.?|Boulevard|Blvd\.?|Lane|Ln\.?|Drive|Dr\.?|Court|Ct\.?|Circle|Cir\.?|Way|Place|Pl\.?)/gi,
+            dates: /\b(?:\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}|\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{2,4}|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2},?\s+\d{2,4})\b/gi,
+            ids: /\b(?:\d{3}-?\d{2}-?\d{4}|[A-Z]\d{7,8}|\d{8,12})\b/g,
+            creditCards: /\b(?:\d{4}[-\s]?){3}\d{4}\b/g,
+            ipAddresses: /\b(?:\d{1,3}\.){3}\d{1,3}\b/g
+        };
+
+        // Upload modal functions
+        function openUploadModal() {
+            document.getElementById('uploadModal').classList.remove('hidden');
+        }
+
+        function closeUploadModal() {
+            document.getElementById('uploadModal').classList.add('hidden');
+        }
+
+        // File upload handling
+        function setupFileUpload() {
+            const uploadZone = document.getElementById('uploadZone');
+            const fileInput = document.getElementById('fileInput');
+
+            // Drag and drop
+            uploadZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadZone.classList.add('dragover');
+            });
+
+            uploadZone.addEventListener('dragleave', () => {
+                uploadZone.classList.remove('dragover');
+            });
+
+            uploadZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadZone.classList.remove('dragover');
+                const files = Array.from(e.dataTransfer.files);
+                processFiles(files);
+            });
+
+            // File input change
+            fileInput.addEventListener('change', (e) => {
+                const files = Array.from(e.target.files);
+                processFiles(files);
+            });
+
+            // Click to upload
+            uploadZone.addEventListener('click', () => {
+                fileInput.click();
+            });
+        }
+
+        // Process uploaded files
+        async function processFiles(files) {
+            closeUploadModal();
+            
+            for (const file of files) {
+                await processDocument(file);
+            }
+            
+            updateDashboard();
+        }
+
+        // File to base64 conversion
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        // Main document processing function
+        async function processDocument(file) {
+            const startTime = Date.now();
+            showProcessingOverlay(true);
+            updateProcessingStatus('Initializing...', 10);
+
+            try {
+                let extractedText = '';
+                let documentType = determineDocumentType(file);
+                const documentId = Date.now();
+
+                updateProcessingStatus('Extracting text from document...', 30);
+
+                if (file.type.includes('pdf')) {
+                    extractedText = await extractTextFromPDF(file);
+                } else if (file.type.includes('image')) {
+                    extractedText = await extractTextFromImage(file);
+                } else {
+                    extractedText = await extractTextFromDocument(file);
+                }
+
+                updateProcessingStatus('Analyzing extracted content...', 60);
+
+                const analysisResult = analyzeExtractedText(extractedText);
+                const processingTime = (Date.now() - startTime) / 1000;
+
+                updateProcessingStatus('Saving to database...', 80);
+
+                // Convert file to base64 for storage
+                const fileData = await fileToBase64(file);
+
+                // Create thumbnail for images
+                let thumbnail = null;
+                if (file.type.includes('image')) {
+                    thumbnail = await createThumbnail(file);
+                }
+
+                updateProcessingStatus('Finalizing results...', 90);
+
+                // Store document data
+                const documentData = {
+                    id: documentId,
+                    name: file.name,
+                    type: documentType,
+                    size: file.size,
+                    mimeType: file.type,
+                    extractedText: extractedText,
+                    analysisResult: analysisResult,
+                    processingTime: processingTime,
+                    uploadDate: new Date(),
+                    confidence: calculateConfidence(analysisResult),
+                    status: 'completed',
+                    thumbnail: thumbnail
+                };
+
+                // Save to IndexedDB
+                await dbManager.saveDocument(documentData);
+                await dbManager.saveFile(documentId, fileData);
+                await dbManager.saveExtractedData(analysisResult.extractedItems, documentId);
+                await dbManager.saveActivity({
+                    type: 'document_processed',
+                    documentId: documentId,
+                    documentName: file.name,
+                    extractedCount: analysisResult.totalItems
+                });
+
+                // Update local arrays
+                documents.push(documentData);
+                extractedData.push(...analysisResult.extractedItems);
+                processingTimes.push(processingTime);
+
+                // Update detection types
+                analysisResult.extractedItems.forEach(item => {
+                    if (detectionTypes[item.type] !== undefined) {
+                        detectionTypes[item.type]++;
+                    }
+                });
+
+                // Update daily activity (today = current day of week)
+                const today = new Date().getDay();
+                const dayIndex = today === 0 ? 6 : today - 1; // Convert Sunday=0 to Monday=0 format
+                dailyActivity[dayIndex]++;
+
+                updateProcessingStatus('Complete!', 100);
+                setTimeout(() => showProcessingOverlay(false), 1000);
+
+                showNotification(`Successfully processed ${file.name}`, 'success');
+                addToRecentActivity(documentData);
+
+            } catch (error) {
+                console.error('Error processing document:', error);
+                showProcessingOverlay(false);
+                showNotification(`Error processing ${file.name}: ${error.message}`, 'error');
+            }
+        }
+
+        // Create thumbnail for images
+        function createThumbnail(file) {
+            return new Promise((resolve) => {
+                if (!file.type.includes('image')) {
+                    resolve(null);
+                    return;
+                }
+
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const img = new Image();
+
+                img.onload = () => {
+                    const maxSize = 80;
+                    let { width, height } = img;
+
+                    if (width > height) {
+                        if (width > maxSize) {
+                            height = (height * maxSize) / width;
+                            width = maxSize;
+                        }
+                    } else {
+                        if (height > maxSize) {
+                            width = (width * maxSize) / height;
+                            height = maxSize;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+                    resolve(canvas.toDataURL('image/jpeg', 0.7));
+                };
+
+                img.src = URL.createObjectURL(file);
+            });
+        }
+
+        // Extract text from image using Tesseract.js
+        async function extractTextFromImage(file) {
+            return new Promise((resolve, reject) => {
+                if (typeof Tesseract === 'undefined') {
+                    reject(new Error('Tesseract.js not loaded'));
+                    return;
+                }
+                
+                Tesseract.recognize(
+                    file,
+                    'eng',
+                    {
+                        logger: m => {
+                            if (m.status === 'recognizing text') {
+                                const progress = Math.round(m.progress * 40) + 30; // 30-70%
+                                updateProcessingStatus(`OCR: ${m.status}...`, progress);
+                            }
+                        }
+                    }
+                ).then(({ data: { text } }) => {
+                    resolve(text);
+                }).catch(reject);
+            });
+        }
+
+        // Extract text from PDF
+        async function extractTextFromPDF(file) {
+            if (typeof pdfjsLib === 'undefined') {
+                throw new Error('PDF.js not loaded');
+            }
+            
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            let fullText = '';
+
+            for (let i = 1; i <= pdf.numPages; i++) {
+                updateProcessingStatus(`Processing PDF page ${i}/${pdf.numPages}...`, 30 + (i / pdf.numPages) * 30);
+                const page = await pdf.getPage(i);
+                const textContent = await page.getTextContent();
+                const pageText = textContent.items.map(item => item.str).join(' ');
+                fullText += pageText + '\n';
+            }
+
+            return fullText;
+        }
+
+        // Extract text from document (TXT, etc.)
+        async function extractTextFromDocument(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = reject;
+                reader.readAsText(file);
+            });
+        }
+
+        // Determine document type based on content and filename
+        function determineDocumentType(file) {
+            const name = file.name.toLowerCase();
+            if (name.includes('license') || name.includes('dl')) return 'Driver License';
+            if (name.includes('passport')) return 'Passport';
+            if (name.includes('id') || name.includes('card')) return 'ID Card';
+            if (name.includes('birth')) return 'Birth Certificate';
+            if (name.includes('social') || name.includes('ssn')) return 'SSN Document';
+            if (file.type.includes('pdf')) return 'PDF Document';
+            if (file.type.includes('image')) return 'Image Document';
+            if (file.type.includes('text')) return 'Text Document';
+            return 'Unknown Document';
+        }
+
+        // Analyze extracted text for sensitive information
+        function analyzeExtractedText(text) {
+            const extractedItems = [];
+
+            // Extract names
+            const names = [...new Set((text.match(extractionPatterns.names) || []))];
+            names.forEach(name => {
+                extractedItems.push({
+                    type: 'Names',
+                    value: name.trim(),
+                    confidence: 85 + Math.random() * 10,
+                    position: text.indexOf(name)
+                });
+            });
+
+            // Extract phone numbers
+            const phones = [...new Set((text.match(extractionPatterns.phoneNumbers) || []))];
+            phones.forEach(phone => {
+                extractedItems.push({
+                    type: 'Phone Numbers',
+                    value: phone.trim(),
+                    confidence: 90 + Math.random() * 8,
+                    position: text.indexOf(phone)
+                });
+            });
+
+            // Extract email addresses
+            const emails = [...new Set((text.match(extractionPatterns.emails) || []))];
+            emails.forEach(email => {
+                extractedItems.push({
+                    type: 'Email Addresses',
+                    value: email.trim(),
+                    confidence: 95 + Math.random() * 5,
+                    position: text.indexOf(email)
+                });
+            });
+
+            // Extract addresses
+            const addresses = [...new Set((text.match(extractionPatterns.addresses) || []))];
+            addresses.forEach(address => {
+                extractedItems.push({
+                    type: 'Addresses',
+                    value: address.trim(),
+                    confidence: 80 + Math.random() * 15,
+                    position: text.indexOf(address)
+                });
+            });
+
+            // Extract dates
+            const dates = [...new Set((text.match(extractionPatterns.dates) || []))];
+            dates.forEach(date => {
+                extractedItems.push({
+                    type: 'Dates',
+                    value: date.trim(),
+                    confidence: 85 + Math.random() * 10,
+                    position: text.indexOf(date)
+                });
+            });
+
+            // Extract IDs and numbers
+            const ids = [...new Set((text.match(extractionPatterns.ids) || []))];
+            ids.forEach(id => {
+                extractedItems.push({
+                    type: 'IDs/Numbers',
+                    value: id.trim(),
+                    confidence: 75 + Math.random() * 20,
+                    position: text.indexOf(id)
+                });
+            });
+
+            return {
+                extractedItems,
+                totalItems: extractedItems.length,
+                averageConfidence: extractedItems.length > 0 ? 
+                    extractedItems.reduce((sum, item) => sum + item.confidence, 0) / extractedItems.length : 0
+            };
+        }
+
+        // Calculate overall confidence score
+        function calculateConfidence(analysisResult) {
+            if (analysisResult.extractedItems.length === 0) return 0;
+            
+            const avgConfidence = analysisResult.averageConfidence;
+            const itemCount = analysisResult.extractedItems.length;
+            
+            // Adjust confidence based on number of items found
+            let adjustedConfidence = avgConfidence;
+            if (itemCount > 5) adjustedConfidence += 5;
+            if (itemCount > 10) adjustedConfidence += 5;
+            
+            return Math.min(Math.round(adjustedConfidence), 100);
+        }
+
+        // Load data from IndexedDB on startup
+        async function loadDataFromDB() {
+            try {
+                // Load all documents
+                const savedDocuments = await dbManager.getAllDocuments();
+                documents = savedDocuments;
+
+                // Load all extracted data
+                const savedExtractedData = await dbManager.getAllExtractedData();
+                extractedData = savedExtractedData;
+
+                // Rebuild processing times array
+                processingTimes = documents.map(doc => doc.processingTime);
+
+                // Rebuild detection types
+                detectionTypes = {
+                    'Names': 0,
+                    'Phone Numbers': 0,
+                    'Email Addresses': 0,
+                    'Addresses': 0,
+                    'Dates': 0,
+                    'IDs/Numbers': 0
+                };
+
+                extractedData.forEach(item => {
+                    if (detectionTypes[item.type] !== undefined) {
+                        detectionTypes[item.type]++;
+                    }
+                });
+
+                // Rebuild daily activity
+                dailyActivity = [0, 0, 0, 0, 0, 0, 0];
+                const today = new Date();
+                const oneWeekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+                documents.forEach(doc => {
+                    const docDate = new Date(doc.uploadDate);
+                    if (docDate >= oneWeekAgo) {
+                        const dayIndex = docDate.getDay() === 0 ? 6 : docDate.getDay() - 1;
+                        dailyActivity[dayIndex]++;
+                    }
+                });
+
+                console.log(`Loaded ${documents.length} documents from database`);
+                updateDashboard();
+                
+                if (documents.length > 0) {
+                    populateRecentActivity();
+                }
+
+            } catch (error) {
+                console.error('Error loading data from database:', error);
+            }
+        }
+
+        // Populate recent activity from database
+        function populateRecentActivity() {
+            const recentDocs = documents.slice(-5).reverse();
+            const activityContainer = document.getElementById('recentActivity');
+            
+            if (recentDocs.length === 0) return;
+
+            activityContainer.innerHTML = '';
+            
+            recentDocs.forEach((doc, index) => {
+                const activityItem = document.createElement('div');
+                activityItem.className = 'activity-item p-4 rounded-lg glass-effect fade-in-up';
+                activityItem.style.animationDelay = `${index * 0.1}s`;
+                
+                const icon = getDocumentIcon(doc.type);
+                const timeAgo = getTimeAgo(doc.uploadDate);
+                
+                activityItem.innerHTML = `
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0">
+                            <i class="fas ${icon} text-green-400 text-xl"></i>
+                        </div>
+                        <div class="ml-4 flex-1">
+                            <p class="text-sm font-medium">${doc.name} processed</p>
+                            <p class="text-xs text-gray-400 mt-1">${doc.analysisResult.totalItems} data points extracted</p>
+                            <p class="text-xs text-gray-500 mt-1">${timeAgo}</p>
+                        </div>
+                        <div class="ml-2">
+                            <span class="text-xs px-2 py-1 rounded-full bg-green-500/20 text-green-400">
+                                ${doc.confidence}%
+                            </span>
+                        </div>
+                    </div>
+                `;
+                
+                activityContainer.appendChild(activityItem);
+            });
+        }
+
+        // Get time ago string
+        function getTimeAgo(date) {
+            const now = new Date();
+            const uploadDate = new Date(date);
+            const diffMs = now - uploadDate;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+
+            if (diffMins < 60) {
+                return diffMins === 0 ? 'Just now' : `${diffMins} min ago`;
+            } else if (diffHours < 24) {
+                return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+            } else {
+                return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+            }
+        }
+
+        // Update dashboard with real data
+        function updateDashboard() {
+            // Update metrics
+            animateNumber('totalDocs', documents.length);
+            animateNumber('dataSecured', extractedData.length);
+            
+            const avgConfidence = documents.length > 0 ? 
+                documents.reduce((sum, doc) => sum + doc.confidence, 0) / documents.length : 0;
+            document.getElementById('avgConfidence').textContent = avgConfidence > 0 ? 
+                `${avgConfidence.toFixed(1)}%` : '--%';
+            
+            const avgProcessing = processingTimes.length > 0 ? 
+                processingTimes.reduce((sum, time) => sum + time, 0) / processingTimes.length : 0;
+            document.getElementById('avgProcessing').textContent = avgProcessing > 0 ? 
+                `${avgProcessing.toFixed(1)}s` : '--s';
+
+            // Update change indicators
+            const todayDocs = documents.filter(doc => 
+                new Date(doc.uploadDate).toDateString() === new Date().toDateString()
+            ).length;
+            
+            document.getElementById('docsChange').innerHTML = 
+                `<i class="fas fa-plus mr-1"></i>+${todayDocs} today`;
+            
+            const todayDataPoints = documents.filter(doc => 
+                new Date(doc.uploadDate).toDateString() === new Date().toDateString()
+            ).reduce((sum, doc) => sum + doc.analysisResult.totalItems, 0);
+            
+            document.getElementById('dataChange').innerHTML = 
+                `<i class="fas fa-plus mr-1"></i>+${todayDataPoints} today`;
+
+            // Update sidebar stats
+            document.getElementById('todayDocs').textContent = todayDocs;
+            document.getElementById('todayDataPoints').textContent = todayDataPoints;
+            document.getElementById('todayConfidence').textContent = 
+                avgConfidence > 0 ? `${avgConfidence.toFixed(1)}%` : '--%';
+
+            // Update charts
+            updateCharts();
+            
+            // Update documents table
+            updateDocumentsTable();
+        }
+
+        // Animate number changes
+        function animateNumber(elementId, targetValue) {
+            const element = document.getElementById(elementId);
+            const currentValue = parseInt(element.textContent) || 0;
+            const increment = Math.max(1, Math.floor((targetValue - currentValue) / 20));
+            
+            if (currentValue < targetValue) {
+                const timer = setInterval(() => {
+                    const newValue = Math.min(targetValue, parseInt(element.textContent) + increment);
+                    element.textContent = newValue.toLocaleString();
+                    
+                    if (newValue >= targetValue) {
+                        clearInterval(timer);
+                    }
+                }, 50);
+            } else {
+                element.textContent = targetValue.toLocaleString();
+            }
+        }
+
+        // Update charts with real data
+        function updateCharts() {
+            if (typeof Chart === 'undefined') {
+                console.error('Chart.js not loaded');
+                return;
+            }
+
+            // Activity Chart
+            const activityCtx = document.getElementById('activityChart').getContext('2d');
+            if (window.activityChart) {
+                window.activityChart.destroy();
+            }
+            
+            window.activityChart = new Chart(activityCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{
+                        label: 'Documents Processed',
+                        data: dailyActivity,
+                        borderColor: '#1E90FF',
+                        backgroundColor: 'rgba(30, 144, 255, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: '#1E90FF',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#F8F8FF' }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#9CA3AF' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: { 
+                                color: '#9CA3AF',
+                                stepSize: 1
+                            },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        }
+                    }
+                }
+            });
+
+            // Detection Types Chart
+            const detectionCtx = document.getElementById('detectionChart').getContext('2d');
+            if (window.detectionChart) {
+                window.detectionChart.destroy();
+            }
+            
+            const detectionLabels = Object.keys(detectionTypes);
+            const detectionData = Object.values(detectionTypes);
+            const hasData = detectionData.some(val => val > 0);
+            
+            if (!hasData) {
+                // Show placeholder chart
+                window.detectionChart = new Chart(detectionCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['No Data Yet'],
+                        datasets: [{
+                            data: [1],
+                            backgroundColor: ['rgba(107, 114, 128, 0.5)'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { color: '#9CA3AF', padding: 20 }
+                            }
+                        }
+                    }
+                });
+            } else {
+                window.detectionChart = new Chart(detectionCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: detectionLabels,
+                        datasets: [{
+                            data: detectionData,
+                            backgroundColor: [
+                                '#EF4444', '#3B82F6', '#10B981',
+                                '#F59E0B', '#8B5CF6', '#06B6D4'
+                            ],
+                            borderWidth: 2,
+                            borderColor: '#1A1A1A'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { color: '#F8F8FF', padding: 20 }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Add to recent activity
+        function addToRecentActivity(documentData) {
+            const activityContainer = document.getElementById('recentActivity');
+            
+            // Clear placeholder if it exists
+            const placeholder = activityContainer.querySelector('.text-center');
+            if (placeholder) {
+                activityContainer.innerHTML = '';
+            }
+
+            const activityItem = document.createElement('div');
+            activityItem.className = 'activity-item p-4 rounded-lg glass-effect fade-in-up';
+            
+            const icon = getDocumentIcon(documentData.type);
+            const timeAgo = 'Just now';
+            
+            activityItem.innerHTML = `
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <i class="fas ${icon} text-green-400 text-xl"></i>
+                    </div>
+                    <div class="ml-4 flex-1">
+                        <p class="text-sm font-medium">${documentData.name} processed</p>
+                        <p class="text-xs text-gray-400 mt-1">${documentData.analysisResult.totalItems} data points extracted</p>
+                        <p class="text-xs text-gray-500 mt-1">${timeAgo}</p>
+                    </div>
+                    <div class="ml-2">
+                        <span class="text-xs px-2 py-1 rounded-full bg-green-500/20 text-green-400">
+                            ${documentData.confidence}%
+                        </span>
+                    </div>
+                </div>
+            `;
+            
+            activityContainer.insertBefore(activityItem, activityContainer.firstChild);
+            
+            // Keep only the latest 5 activities
+            const activities = activityContainer.children;
+            if (activities.length > 5) {
+                activityContainer.removeChild(activities[activities.length - 1]);
+            }
+        }
+
+        // Update documents table
+        function updateDocumentsTable() {
+            const tableBody = document.getElementById('documentsTable');
+            
+            if (documents.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="text-center text-gray-400 py-8">
+                            <i class="fas fa-file-upload text-4xl mb-4"></i>
+                            <p>No documents processed yet. Upload your first document to get started!</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tableBody.innerHTML = '';
+            
+            documents.slice().reverse().forEach((doc, index) => {
+                const row = document.createElement('tr');
+                row.className = 'table-hover transition-all duration-200 fade-in-up';
+                row.style.animationDelay = `${index * 0.1}s`;
+                
+                const statusBadge = getStatusBadge(doc.status, doc.confidence);
+                const confidenceClass = getConfidenceClass(doc.confidence);
+                
+                // Create thumbnail element
+                let thumbnailElement = '';
+                if (doc.thumbnail) {
+                    thumbnailElement = `<img src="${doc.thumbnail}" class="file-thumbnail mr-2" alt="Thumbnail">`;
+                } else {
+                    thumbnailElement = `<i class="fas ${getDocumentIcon(doc.type)} text-blue-400 mr-2"></i>`;
+                }
+                
+                row.innerHTML = `
+                    <td class="py-3 px-4">
+                        <div class="flex items-center">
+                            ${thumbnailElement}
+                            <div>
+                                <span class="font-mono text-sm">${doc.name}</span>
+                                <div class="text-xs text-gray-400">${formatFileSize(doc.size)}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="py-3 px-4 text-sm">${doc.type}</td>
+                    <td class="py-3 px-4">
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-500/20 text-purple-300">
+                            ${doc.analysisResult.totalItems} items
+                        </span>
+                    </td>
+                    <td class="py-3 px-4">
+                        <div class="flex items-center">
+                            <div class="w-12 bg-gray-600 rounded-full h-2 mr-2">
+                                <div class="bg-gradient-to-r from-green-400 to-blue-500 h-2 rounded-full" style="width: ${doc.confidence}%"></div>
+                            </div>
+                            <span class="text-sm ${confidenceClass}">${doc.confidence}%</span>
+                        </div>
+                    </td>
+                    <td class="py-3 px-4">${statusBadge}</td>
+                    <td class="py-3 px-4 text-sm text-gray-400">${formatDate(doc.uploadDate)}</td>
+                    <td class="py-3 px-4">
+                        <div class="flex space-x-2">
+                            <button onclick="viewDocumentDetails('${doc.id}')" class="text-blue-400 hover:text-blue-300 transition" title="View Details">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button onclick="downloadOriginalFile('${doc.id}')" class="text-green-400 hover:text-green-300 transition" title="Download Original">
+                                <i class="fas fa-download"></i>
+                            </button>
+                            <button onclick="showExtractedData('${doc.id}')" class="text-purple-400 hover:text-purple-300 transition" title="View Extracted Data">
+                                <i class="fas fa-search"></i>
+                            </button>
+                            <button onclick="reprocessDocument('${doc.id}')" class="text-yellow-400 hover:text-yellow-300 transition" title="Reprocess">
+                                <i class="fas fa-redo"></i>
+                            </button>
+                            <button onclick="deleteDocument('${doc.id}')" class="text-red-400 hover:text-red-300 transition" title="Delete">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Utility functions
+        function getDocumentIcon(type) {
+            const icons = {
+                'Driver License': 'fa-id-card',
+                'Passport': 'fa-passport',
+                'ID Card': 'fa-address-card',
+                'Birth Certificate': 'fa-certificate',
+                'SSN Document': 'fa-file-shield',
+                'PDF Document': 'fa-file-pdf',
+                'Image Document': 'fa-file-image',
+                'Text Document': 'fa-file-alt'
+            };
+            return icons[type] || 'fa-file';
+        }
+
+        function getStatusBadge(status, confidence) {
+            if (confidence >= 90) {
+                return '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-500/20 text-green-300 border border-green-500/30"><i class="fas fa-check mr-1"></i>High Confidence</span>';
+            } else if (confidence >= 70) {
+                return '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-300 border border-yellow-500/30"><i class="fas fa-exclamation-triangle mr-1"></i>Medium Confidence</span>';
+            } else {
+                return '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-500/20 text-red-300 border border-red-500/30"><i class="fas fa-exclamation-circle mr-1"></i>Low Confidence</span>';
+            }
+        }
+
+        function getConfidenceClass(confidence) {
+            if (confidence >= 90) return 'confidence-high';
+            if (confidence >= 70) return 'confidence-medium';
+            return 'confidence-low';
+        }
+
+        function formatDate(date) {
+            return new Date(date).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Processing overlay functions
+        function showProcessingOverlay(show) {
+            const overlay = document.getElementById('processingOverlay');
+            if (show) {
+                overlay.classList.remove('hidden');
+            } else {
+                overlay.classList.add('hidden');
+            }
+        }
+
+        function updateProcessingStatus(status, progress) {
+            document.getElementById('processingStatus').textContent = status;
+            document.getElementById('processingProgress').style.width = `${progress}%`;
+        }
+
+        // Document action functions
+        function viewDocumentDetails(docId) {
+            const doc = documents.find(d => d.id == docId);
+            if (!doc) return;
+
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 z-50 flex items-center justify-center p-4';
+            modal.style.background = 'rgba(0, 0, 0, 0.8)';
+            
+            modal.innerHTML = `
+                <div class="glass-effect rounded-xl p-6 max-w-2xl w-full max-h-96 overflow-y-auto">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold">Document Details: ${doc.name}</h3>
+                        <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-white">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <span class="text-sm text-gray-400">Type:</span>
+                            <p class="font-medium">${doc.type}</p>
+                        </div>
+                        <div>
+                            <span class="text-sm text-gray-400">Size:</span>
+                            <p class="font-medium">${formatFileSize(doc.size)}</p>
+                        </div>
+                        <div>
+                            <span class="text-sm text-gray-400">Processing Time:</span>
+                            <p class="font-medium">${doc.processingTime.toFixed(2)}s</p>
+                        </div>
+                        <div>
+                            <span class="text-sm text-gray-400">Confidence:</span>
+                            <p class="font-medium ${getConfidenceClass(doc.confidence)}">${doc.confidence}%</p>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <span class="text-sm text-gray-400">Upload Date:</span>
+                        <p class="font-medium">${new Date(doc.uploadDate).toLocaleString()}</p>
+                    </div>
+                    <div>
+                        <span class="text-sm text-gray-400">Extracted Text Preview:</span>
+                        <div class="mt-2 p-3 bg-gray-800 rounded text-sm max-h-32 overflow-y-auto">
+                            ${doc.extractedText.substring(0, 300)}${doc.extractedText.length > 300 ? '...' : ''}
+                        </div>
+                    </div>
+                    <div class="mt-4 text-center">
+                        <button onclick="this.closest('.fixed').remove()" class="btn-primary px-4 py-2 rounded-lg">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+
+        async function downloadOriginalFile(docId) {
+            try {
+                const doc = documents.find(d => d.id == docId);
+                if (!doc) return;
+
+                const fileData = await dbManager.getFile(docId);
+                if (!fileData) {
+                    showNotification('File data not found', 'error');
+                    return;
+                }
+
+                // Convert base64 back to blob
+                const response = await fetch(fileData.data);
+                const blob = await response.blob();
+
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = doc.name;
+                link.click();
+                
+                URL.revokeObjectURL(url);
+                showNotification(`Downloaded ${doc.name}`, 'success');
+            } catch (error) {
+                console.error('Error downloading file:', error);
+                showNotification('Error downloading file', 'error');
+            }
+        }
+
+        async function showExtractedData(docId) {
+            try {
+                const doc = documents.find(d => d.id == docId);
+                if (!doc) return;
+
+                const extractedItems = await dbManager.getExtractedDataByDocument(docId);
+
+                let dataHtml = `
+                    <div class="glass-effect rounded-xl p-6 max-w-2xl mx-auto">
+                        <h3 class="text-xl font-bold mb-4">Extracted Data: ${doc.name}</h3>
+                        <div class="space-y-4 max-h-96 overflow-y-auto">
+                `;
+
+                if (extractedItems.length === 0) {
+                    dataHtml += `
+                        <div class="text-center text-gray-400 py-8">
+                            <i class="fas fa-search text-4xl mb-4"></i>
+                            <p>No data was extracted from this document.</p>
+                        </div>
+                    `;
+                } else {
+                    extractedItems.forEach(item => {
+                        const confidenceClass = getConfidenceClass(item.confidence);
+                        dataHtml += `
+                            <div class="extracted-data p-3 rounded-lg">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <span class="text-sm font-medium text-purple-400">${item.type}</span>
+                                        <p class="text-white font-mono">${item.value}</p>
+                                    </div>
+                                    <span class="text-xs ${confidenceClass}">${item.confidence.toFixed(1)}%</span>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+
+                dataHtml += `
+                        </div>
+                        <div class="mt-4 text-center space-x-2">
+                            <button onclick="downloadExtractedData('${docId}')" class="btn-primary px-4 py-2 rounded-lg mr-2">
+                                <i class="fas fa-download mr-1"></i>Download JSON
+                            </button>
+                            <button onclick="this.closest('.fixed').remove()" class="glass-effect px-4 py-2 rounded-lg hover:bg-white/20">
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                const modal = document.createElement('div');
+                modal.className = 'fixed inset-0 z-50 flex items-center justify-center p-4';
+                modal.style.background = 'rgba(0, 0, 0, 0.8)';
+                modal.innerHTML = dataHtml;
+                
+                document.body.appendChild(modal);
+            } catch (error) {
+                console.error('Error showing extracted data:', error);
+                showNotification('Error loading extracted data', 'error');
+            }
+        }
+
+        async function downloadExtractedData(docId) {
+            try {
+                const doc = documents.find(d => d.id == docId);
+                const extractedItems = await dbManager.getExtractedDataByDocument(docId);
+
+                const results = {
+                    document: doc.name,
+                    type: doc.type,
+                    processingDate: doc.uploadDate,
+                    confidence: doc.confidence,
+                    extractedData: extractedItems,
+                    totalItems: extractedItems.length
+                };
+
+                const dataStr = JSON.stringify(results, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(dataBlob);
+                
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `${doc.name}_extracted_data.json`;
+                link.click();
+                
+                URL.revokeObjectURL(url);
+                showNotification(`Downloaded extracted data for ${doc.name}`, 'success');
+            } catch (error) {
+                console.error('Error downloading extracted data:', error);
+                showNotification('Error downloading extracted data', 'error');
+            }
+        }
+
+        async function reprocessDocument(docId) {
+            try {
+                const doc = documents.find(d => d.id == docId);
+                if (!doc) return;
+
+                const fileData = await dbManager.getFile(docId);
+                if (!fileData) {
+                    showNotification('Original file not found', 'error');
+                    return;
+                }
+
+                showNotification(`Reprocessing ${doc.name}...`, 'info');
+
+                // Convert base64 back to file
+                const response = await fetch(fileData.data);
+                const blob = await response.blob();
+                const file = new File([blob], doc.name, { type: doc.mimeType });
+
+                // Remove old data from arrays
+                const docIndex = documents.findIndex(d => d.id == docId);
+                if (docIndex !== -1) {
+                    documents.splice(docIndex, 1);
+                }
+
+                // Remove extracted data from array
+                extractedData = extractedData.filter(item => item.documentId !== docId);
+
+                // Update detection types by removing old counts
+                doc.analysisResult.extractedItems.forEach(item => {
+                    if (detectionTypes[item.type] !== undefined) {
+                        detectionTypes[item.type] = Math.max(0, detectionTypes[item.type] - 1);
+                    }
+                });
+
+                // Delete from database
+                await dbManager.deleteDocument(docId);
+
+                // Reprocess the file
+                await processDocument(file);
+                updateDashboard();
+
+            } catch (error) {
+                console.error('Error reprocessing document:', error);
+                showNotification('Error reprocessing document', 'error');
+            }
+        }
+
+        async function deleteDocument(docId) {
+            try {
+                const doc = documents.find(d => d.id == docId);
+                if (!doc) return;
+
+                if (!confirm(`Are you sure you want to delete "${doc.name}"? This action cannot be undone.`)) {
+                    return;
+                }
+
+                // Remove from arrays
+                const docIndex = documents.findIndex(d => d.id == docId);
+                if (docIndex !== -1) {
+                    documents.splice(docIndex, 1);
+                }
+
+                // Remove extracted data
+                extractedData = extractedData.filter(item => item.documentId !== docId);
+
+                // Update detection types
+                doc.analysisResult.extractedItems.forEach(item => {
+                    if (detectionTypes[item.type] !== undefined) {
+                        detectionTypes[item.type] = Math.max(0, detectionTypes[item.type] - 1);
+                    }
+                });
+
+                // Remove processing time
+                const timeIndex = processingTimes.indexOf(doc.processingTime);
+                if (timeIndex !== -1) {
+                    processingTimes.splice(timeIndex, 1);
+                }
+
+                // Delete from database
+                await dbManager.deleteDocument(docId);
+
+                // Update dashboard
+                updateDashboard();
+                populateRecentActivity();
+
+                showNotification(`Deleted ${doc.name}`, 'success');
+
+            } catch (error) {
+                console.error('Error deleting document:', error);
+                showNotification('Error deleting document', 'error');
+            }
+        }
+
+        // Notification system
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 transform translate-x-full glass-effect`;
+            
+            const bgColor = type === 'success' ? 'border-green-500' : 
+                           type === 'error' ? 'border-red-500' : 
+                           type === 'warning' ? 'border-yellow-500' : 'border-blue-500';
+            
+            notification.classList.add('border', bgColor);
+            
+            const icon = type === 'success' ? 'check-circle' : 
+                        type === 'error' ? 'exclamation-triangle' : 
+                        type === 'warning' ? 'exclamation-triangle' : 'info-circle';
+            
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-${icon} mr-2 text-${type === 'error' ? 'red' : type === 'success' ? 'green' : type === 'warning' ? 'yellow' : 'blue'}-400"></i>
+                    <span>${message}</span>
+                    <button class="ml-4 text-gray-400 hover:text-white" onclick="this.parentElement.parentElement.remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => notification.classList.remove('translate-x-full'), 100);
+            setTimeout(() => {
+                notification.classList.add('translate-x-full');
+                setTimeout(() => notification.remove(), 300);
+            }, 5000);
+        }
+
+        // Scroll to section smoothly
+        function scrollToSection(sectionId) {
+            const section = document.getElementById(sectionId);
+            if (section) {
+                section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                section.classList.add('neon-border');
+                setTimeout(() => {
+                    section.classList.remove('neon-border');
+                }, 2000);
+            }
+        }
+
+        // Real-time updates
+        function updateLastLogin() {
+            const now = new Date();
+            document.getElementById('lastLogin').textContent = 
+                `Today, ${now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
+        }
+
+        // Initialize the application
+        async function initApp() {
+            try {
+                // Initialize database
+                await dbManager.init();
+                
+                // Load existing data
+                await loadDataFromDB();
+                
+                // Initialize Three.js background
+                initThreeJS();
+                
+                // Set up file upload
+                setupFileUpload();
+                
+                // Update last login time
+                updateLastLogin();
+                
+                // Add event listener for window resize
+                window.addEventListener('resize', () => {
+                    if (window.activityChart) {
+                        window.activityChart.resize();
+                    }
+                    if (window.detectionChart) {
+                        window.detectionChart.resize();
+                    }
+                });
+                
+                console.log('Application initialized successfully');
+                
+            } catch (error) {
+                console.error('Error initializing application:', error);
+                showNotification('Error initializing application', 'error');
+            }
+        }
+
+        // Start the application when the DOM is loaded
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>

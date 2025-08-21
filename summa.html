@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureID Pro - Enhanced Masking Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --electric-blue: #1E90FF;
+            --gold: #FFD700;
+            --gold-secondary: #FFC300;
+            --teal-blue: #007B8A;
+            --cyan: #00BCD4;
+            --deep-purple: #4B0082;
+            --navy-blue: #1F2F46;
+            --dark-charcoal: #1A1A1A;
+            --jet-black: #121212;
+            --platinum-white: #F8F8FF;
+
+            --text-main: var(--platinum-white);
+            --text-accent: var(--gold);
+            --background-main: var(--navy-blue);
+            --background-dark: var(--dark-charcoal);
+            --button-bg: var(--electric-blue);
+            --button-hover: var(--gold);
+            --accent: var(--teal-blue);
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(-100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes glitch {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+            100% { transform: translate(0); }
+        }
+        
+        .floating { animation: float 3s ease-in-out infinite; }
+        .pulsing { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        .slide-in { animation: slideIn 0.5s ease-out; }
+        .fade-in-up { animation: fadeInUp 0.6s ease-out forwards; }
+        
+        .glass-effect {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .neon-border {
+            box-shadow: 0 0 5px rgba(30, 144, 255, 0.5), 
+                       0 0 20px rgba(30, 144, 255, 0.3), 
+                       0 0 35px rgba(30, 144, 255, 0.1);
+        }
+
+        body {
+            background: var(--background-dark);
+            color: var(--text-main);
+        }
+
+        .bg-gradient-to-br {
+            background-image: linear-gradient(to bottom right, var(--background-dark), var(--background-main));
+        }
+
+        .text-accent {
+            color: var(--text-accent);
+        }
+
+        .feature-card {
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--electric-blue);
+            box-shadow: 0 10px 25px rgba(30, 144, 255, 0.2);
+        }
+
+        #threejs-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.2;
+        }
+
+        .masking-demo-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 2px solid rgba(30, 144, 255, 0.3);
+            background: #000;
+        }
+
+        .document-image {
+            width: 100%;
+            height: auto;
+            display: block;
+            position: relative;
+        }
+
+        .masking-overlays {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .masking-overlay {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.95);
+            opacity: 0;
+            transition: all 0.3s ease;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 12px;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(255,255,255,0.3);
+        }
+
+        .masking-overlay.blur-mode {
+            background: rgba(30, 144, 255, 0.6);
+            backdrop-filter: blur(15px);
+        }
+
+        .masking-overlay.pixelate-mode {
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0,0,0,0.9) 0px,
+                rgba(0,0,0,0.9) 2px,
+                rgba(30,144,255,0.9) 2px,
+                rgba(30,144,255,0.9) 4px
+            );
+        }
+
+        .masking-overlay.pattern-mode {
+            background: repeating-linear-gradient(
+                45deg,
+                rgba(255,0,0,0.8) 0px,
+                rgba(255,0,0,0.8) 3px,
+                rgba(0,0,0,0.8) 3px,
+                rgba(0,0,0,0.8) 6px
+            );
+        }
+
+        /* Accurate positioning for Aadhaar card elements */
+        .photo-mask {
+            top: 8%;
+            left: 4%;
+            width: 18%;
+            height: 28%;
+        }
+
+        .name-mask {
+            top: 42%;
+            left: 4%;
+            width: 45%;
+            height: 8%;
+        }
+
+        .aadhaar-number-mask {
+            top: 75%;
+            left: 4%;
+            width: 50%;
+            height: 6%;
+        }
+
+        .dob-mask {
+            top: 52%;
+            left: 4%;
+            width: 25%;
+            height: 5%;
+        }
+
+        .address-mask {
+            top: 58%;
+            left: 4%;
+            width: 60%;
+            height: 15%;
+        }
+
+        .slider-container {
+            position: relative;
+            width: 100%;
+            height: 60px;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .slider-track {
+            flex: 1;
+            height: 6px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 3px;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .slider-progress {
+            height: 100%;
+            background: linear-gradient(to right, #1E90FF, #00BCD4);
+            border-radius: 3px;
+            width: 0%;
+            transition: width 0.1s ease;
+        }
+
+        .slider-handle {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(45deg, #1E90FF, #00BCD4);
+            border-radius: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            cursor: grab;
+            box-shadow: 0 0 20px rgba(30, 144, 255, 0.5);
+            left: 0%;
+        }
+
+        .slider-handle:active {
+            cursor: grabbing;
+        }
+
+        .slider-labels {
+            position: absolute;
+            bottom: 10px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+        }
+
+        .label {
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 11px;
+            font-weight: bold;
+            backdrop-filter: blur(10px);
+        }
+
+        .label-before {
+            background: linear-gradient(45deg, #dc2626, #b91c1c);
+        }
+
+        .label-after {
+            background: linear-gradient(45deg, #059669, #047857);
+        }
+
+        .masking-controls {
+            padding: 20px;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .masking-mode-btn {
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .masking-mode-btn.active {
+            background: linear-gradient(45deg, #1E90FF, #00BCD4);
+            border-color: #1E90FF;
+        }
+
+        .masking-mode-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .intensity-slider {
+            width: 100px;
+            height: 4px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 2px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .detection-indicator {
+            position: absolute;
+            background: rgba(255, 0, 0, 0.8);
+            border: 2px solid #ff0000;
+            border-radius: 4px;
+            opacity: 0;
+            animation: pulse 1s infinite;
+            pointer-events: none;
+        }
+
+        .detection-indicator.active {
+            opacity: 1;
+        }
+
+        .stats-panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.9);
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            min-width: 150px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            color: #00BCD4;
+            font-weight: bold;
+        }
+
+        @media screen and (max-width: 768px) {
+            .masking-demo-container {
+                max-width: 100%;
+            }
+            
+            .masking-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .control-group {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br">
+    <!-- Three.js Background -->
+    <div id="threejs-background"></div>
+
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <div class="flex items-center justify-center mb-4">
+                <i class="fas fa-shield-halved text-4xl mr-3 floating text-accent"></i>
+                <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                    SecureID Pro - Enhanced Masking Demo
+                </h1>
+            </div>
+            <p class="text-gray-300 text-lg">AI-powered personal detail detection and masking</p>
+        </header>
+
+        <!-- Main Demo Section -->
+        <div class="glass-effect rounded-xl p-6 feature-card">
+            <div class="flex items-center mb-6">
+                <i class="fas fa-eye text-2xl text-blue-400 mr-3"></i>
+                <h2 class="text-2xl font-semibold">Live Masking Demonstration</h2>
+            </div>
+            
+            <p class="text-gray-300 mb-6">
+                Use the slider to dynamically mask personal details. Our AI accurately detects and masks:
+                <span class="text-blue-400">Photo</span>, 
+                <span class="text-green-400">Name</span>, 
+                <span class="text-yellow-400">Aadhaar Number</span>, 
+                <span class="text-purple-400">Date of Birth</span>, and 
+                <span class="text-cyan-400">Address</span>.
+            </p>
+            
+            <div class="masking-demo-container">
+                <!-- Sample Aadhaar-like document -->
+                <div class="relative">
+                    <svg class="document-image" viewBox="0 0 800 500" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Background -->
+                        <rect width="800" height="500" fill="#f8f9fa"/>
+                        <rect width="800" height="80" fill="#4a90e2"/>
+                        
+                        <!-- Header -->
+                        <text x="400" y="50" text-anchor="middle" fill="white" font-size="32" font-weight="bold">भारत सरकार • Government of India</text>
+                        
+                        <!-- Photo placeholder -->
+                        <rect x="40" y="100" width="140" height="180" fill="#e0e0e0" stroke="#ccc" stroke-width="2"/>
+                        <text x="110" y="200" text-anchor="middle" fill="#666" font-size="14">PHOTO</text>
+                        
+                        <!-- Personal Details -->
+                        <text x="200" y="130" fill="#333" font-size="18" font-weight="bold">Name / नाम:</text>
+                        <text x="200" y="155" fill="#000" font-size="20" font-weight="bold">राज कुमार शर्मा</text>
+                        <text x="200" y="175" fill="#000" font-size="16">RAJ KUMAR SHARMA</text>
+                        
+                        <text x="200" y="210" fill="#333" font-size="16">Date of Birth / जन्म तिथि:</text>
+                        <text x="200" y="235" fill="#000" font-size="18" font-weight="bold">15/08/1985</text>
+                        
+                        <text x="200" y="270" fill="#333" font-size="16">Address / पता:</text>
+                        <text x="200" y="295" fill="#000" font-size="14">123, Green Park Colony</text>
+                        <text x="200" y="315" fill="#000" font-size="14">Near City Mall, Sector 12</text>
+                        <text x="200" y="335" fill="#000" font-size="14">New Delhi - 110016</text>
+                        
+                        <!-- Aadhaar Number -->
+                        <text x="40" y="400" fill="#333" font-size="16">Aadhaar Number / आधार संख्या:</text>
+                        <text x="40" y="430" fill="#000" font-size="24" font-weight="bold" letter-spacing="4px">1234 5678 9012</text>
+                        
+                        <!-- QR Code placeholder -->
+                        <rect x="600" y="300" width="120" height="120" fill="#000"/>
+                        <rect x="610" y="310" width="100" height="100" fill="white"/>
+                        <text x="660" y="365" text-anchor="middle" fill="#000" font-size="12">QR CODE</text>
+                    </svg>
+                    
+                    <!-- Masking Overlays -->
+                    <div class="masking-overlays">
+                        <!-- Photo mask -->
+                        <div class="masking-overlay photo-mask" id="photoMask">
+                            <i class="fas fa-user-secret"></i>
+                        </div>
+                        
+                        <!-- Name mask -->
+                        <div class="masking-overlay name-mask" id="nameMask">
+                            <i class="fas fa-eye-slash mr-1"></i>NAME MASKED
+                        </div>
+                        
+                        <!-- DOB mask -->
+                        <div class="masking-overlay dob-mask" id="dobMask">
+                            <i class="fas fa-calendar-times mr-1"></i>DOB
+                        </div>
+                        
+                        <!-- Address mask -->
+                        <div class="masking-overlay address-mask" id="addressMask">
+                            <i class="fas fa-map-marker-alt mr-1"></i>ADDRESS PROTECTED
+                        </div>
+                        
+                        <!-- Aadhaar number mask -->
+                        <div class="masking-overlay aadhaar-number-mask" id="aadhaarMask">
+                            <i class="fas fa-lock mr-1"></i>AADHAAR MASKED
+                        </div>
+                    </div>
+                    
+                    <!-- Stats Panel -->
+                    <div class="stats-panel">
+                        <h4 class="text-white text-sm font-bold mb-2">Detection Stats</h4>
+                        <div class="stat-item">
+                            <span>Elements Found:</span>
+                            <span class="stat-value" id="elementsFound">5</span>
+                        </div>
+                        <div class="stat-item">
+                            <span>Masked:</span>
+                            <span class="stat-value" id="elementsMasked">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span>Accuracy:</span>
+                            <span class="stat-value">99.2%</span>
+                        </div>
+                        <div class="stat-item">
+                            <span>Processing:</span>
+                            <span class="stat-value">0.3s</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Slider Control -->
+                <div class="slider-container">
+                    <i class="fas fa-unlock text-red-400 mr-3"></i>
+                    <div class="slider-track" id="sliderTrack">
+                        <div class="slider-progress" id="sliderProgress"></div>
+                        <div class="slider-handle" id="sliderHandle"></div>
+                    </div>
+                    <i class="fas fa-lock text-green-400 ml-3"></i>
+                </div>
+                
+                <!-- Masking Controls -->
+                <div class="masking-controls">
+                    <div class="control-group">
+                        <label class="text-sm font-medium">Masking Mode:</label>
+                        <button class="masking-mode-btn active" data-mode="solid" id="solidMode">
+                            <i class="fas fa-square mr-1"></i>Solid
+                        </button>
+                        <button class="masking-mode-btn" data-mode="blur" id="blurMode">
+                            <i class="fas fa-blur mr-1"></i>Blur
+                        </button>
+                        <button class="masking-mode-btn" data-mode="pixelate" id="pixelateMode">
+                            <i class="fas fa-th-large mr-1"></i>Pixelate
+                        </button>
+                        <button class="masking-mode-btn" data-mode="pattern" id="patternMode">
+                            <i class="fas fa-pattern mr-1"></i>Pattern
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Labels -->
+                <div class="slider-labels">
+                    <div class="label label-before">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>
+                        Personal Details Visible
+                    </div>
+                    <div class="label label-after">
+                        <i class="fas fa-shield-check mr-1"></i>
+                        All Details Protected
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Feature Highlights -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                <div class="glass-effect rounded-lg p-4">
+                    <div class="flex items-center mb-2">
+                        <i class="fas fa-brain text-blue-400 mr-2"></i>
+                        <h4 class="font-semibold">AI Detection</h4>
+                    </div>
+                    <p class="text-sm text-gray-400">Automatically identifies 15+ types of sensitive information</p>
+                </div>
+                
+                <div class="glass-effect rounded-lg p-4">
+                    <div class="flex items-center mb-2">
+                        <i class="fas fa-palette text-purple-400 mr-2"></i>
+                        <h4 class="font-semibold">Multiple Modes</h4>
+                    </div>
+                    <p class="text-sm text-gray-400">Choose from 4 different masking techniques</p>
+                </div>
+                
+                <div class="glass-effect rounded-lg p-4">
+                    <div class="flex items-center mb-2">
+                        <i class="fas fa-lightning-bolt text-yellow-400 mr-2"></i>
+                        <h4 class="font-semibold">Real-time</h4>
+                    </div>
+                    <p class="text-sm text-gray-400">Instant processing with live preview</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Three.js Background Animation
+        function initThreeJS() {
+            const container = document.getElementById('threejs-background');
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+            camera.position.z = 30;
+
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(width, height);
+            container.appendChild(renderer.domElement);
+
+            // Create particles
+            const particlesGeometry = new THREE.BufferGeometry();
+            const particleCount = 1000;
+            const posArray = new Float32Array(particleCount * 3);
+            
+            for(let i = 0; i < particleCount * 3; i++) {
+                posArray[i] = (Math.random() - 0.5) * 100;
+            }
+            
+            particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+            
+            const particlesMaterial = new THREE.PointsMaterial({
+                size: 0.5,
+                color: 0x1E90FF,
+                transparent: true,
+                opacity: 0.8,
+                blending: THREE.AdditiveBlending
+            });
+            
+            const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+            scene.add(particlesMesh);
+            
+            function animate() {
+                requestAnimationFrame(animate);
+                particlesMesh.rotation.y += 0.001;
+                renderer.render(scene, camera);
+            }
+            
+            animate();
+            
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+
+        // Enhanced Masking Demo
+        function initMaskingDemo() {
+            const sliderTrack = document.getElementById('sliderTrack');
+            const sliderHandle = document.getElementById('sliderHandle');
+            const sliderProgress = document.getElementById('sliderProgress');
+            const elementsMaskedEl = document.getElementById('elementsMasked');
+            
+            const maskingOverlays = [
+                document.getElementById('photoMask'),
+                document.getElementById('nameMask'),
+                document.getElementById('dobMask'),
+                document.getElementById('addressMask'),
+                document.getElementById('aadhaarMask')
+            ];
+            
+            let isDragging = false;
+            let currentPosition = 0;
+            let currentMode = 'solid';
+            
+            function updateMasking(percent) {
+                percent = Math.max(0, Math.min(100, percent));
+                currentPosition = percent;
+                
+                // Update slider position
+                sliderHandle.style.left = percent + '%';
+                sliderProgress.style.width = percent + '%';
+                
+                // Update masking overlays
+                const opacity = percent / 100;
+                let maskedCount = 0;
+                
+                maskingOverlays.forEach((overlay, index) => {
+                    if (overlay) {
+                        const threshold = (index + 1) * 20; // Staggered masking
+                        if (percent >= threshold) {
+                            overlay.style.opacity = '1';
+                            maskedCount++;
+                        } else {
+                            overlay.style.opacity = '0';
+                        }
+                    }
+                });
+                
+                // Update stats
+                if (elementsMaskedEl) {
+                    elementsMaskedEl.textContent = maskedCount;
+                }
+            }
+            
+            function updateMaskingMode(mode) {
+                currentMode = mode;
+                
+                // Update button states
+                document.querySelectorAll('.masking-mode-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                document.querySelector(`[data-mode="${mode}"]`).classList.add('active');
+                
+                // Update overlay classes
+                maskingOverlays.forEach(overlay => {
+                    if (overlay) {
+                        overlay.classList.remove('blur-mode', 'pixelate-mode', 'pattern-mode');
+                        if (mode !== 'solid') {
+                            overlay.classList.add(`${mode}-mode`);
+                        }
+                    }
+                });
+            }
+            
+            function getEventX(e) {
+                return e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+            }
+            
+            function handleMove(e) {
+                if (!isDragging) return;
+                
+                const rect = sliderTrack.getBoundingClientRect();
+                const x = getEventX(e) - rect.left;
+                const percent = (x / rect.width) * 100;
+                updateMasking(percent);
+                e.preventDefault();
+            }
+            
+            function startDrag(e) {
+                isDragging = true;
+                document.body.style.cursor = 'grabbing';
+                e.preventDefault();
+            }
+            
+            function endDrag() {
+                isDragging = false;
+                document.body.style.cursor = '';
+            }
+            
+            // Event listeners
+            sliderHandle.addEventListener('mousedown', startDrag);
+            sliderHandle.addEventListener('touchstart', startDrag);
+            
+            document.addEventListener('mouseup', endDrag);
+            document.addEventListener('touchend', endDrag);
+            
+            document.addEventListener('mousemove', handleMove);
+            document.addEventListener('touchmove', handleMove);
+            
+            sliderTrack.addEventListener('click', (e) => {
+                if (e.target === sliderHandle) return;
+                const rect = sliderTrack.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const percent = (x / rect.width) * 100;
+                updateMasking(percent);
+            });
+            
+            // Masking mode buttons
+            document.querySelectorAll('.masking-mode-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    updateMaskingMode(btn.dataset.mode);
+                });
+            });
+            
+            // Keyboard controls
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowLeft') {
+                    updateMasking(Math.max(0, currentPosition - 5));
+                    e.preventDefault();
+                } else if (e.key === 'ArrowRight') {
+                    updateMasking(Math.min(100, currentPosition + 5));
+                    e.preventDefault();
+                } else if (e.key >= '1' && e.key <= '4') {
+                    const modes = ['solid', 'blur', 'pixelate', 'pattern'];
+                    updateMaskingMode(modes[parseInt(e.key) - 1]);
+                    e.preventDefault();
+                }
+            });
+            
+            // Initialize
+            updateMasking(0);
+            updateMaskingMode('solid');
+        }
+        
+        // Auto-demo function
+        function startAutoDemo() {
+            let direction = 1;
+            let position = 0;
+            
+            const autoDemoInterval = setInterval(() => {
+                position += direction * 2;
+                
+                if (position >= 100) {
+                    direction = -1;
+                    position = 100;
+                } else if (position <= 0) {
+                    direction = 1;
+                    position = 0;
+                }
+                
+                // Don't override if user is manually controlling
+                if (!document.querySelector('.slider-handle:active')) {
+                    document.getElementById('sliderHandle').style.left = position + '%';
+                    document.getElementById('sliderProgress').style.width = position + '%';
+                    
+                    // Update masking
+                    const maskedCount = Math.floor((position / 100) * 5);
+                    document.getElementById('elementsMasked').textContent = maskedCount;
+                    
+                    // Update overlay visibility
+                    const maskingOverlays = [
+                        document.getElementById('photoMask'),
+                        document.getElementById('nameMask'),
+                        document.getElementById('dobMask'),
+                        document.getElementById('addressMask'),
+                        document.getElementById('aadhaarMask')
+                    ];
+                    
+                    maskingOverlays.forEach((overlay, index) => {
+                        if (overlay) {
+                            const threshold = (index + 1) * 20;
+                            overlay.style.opacity = position >= threshold ? '1' : '0';
+                        }
+                    });
+                }
+            }, 100);
+            
+            // Stop auto demo after 30 seconds or on user interaction
+            setTimeout(() => clearInterval(autoDemoInterval), 30000);
+            
+            document.addEventListener('mousedown', () => clearInterval(autoDemoInterval), { once: true });
+            document.addEventListener('touchstart', () => clearInterval(autoDemoInterval), { once: true });
+        }
+
+        // Initialize everything when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Enhanced SecureID Pro Demo Loading...');
+            
+            // Initialize components
+            initThreeJS();
+            initMaskingDemo();
+            
+            // Start auto demo after 2 seconds
+            setTimeout(startAutoDemo, 2000);
+            
+            // Add click effects to cards
+            document.querySelectorAll('.feature-card').forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-8px) scale(1.02)';
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0) scale(1)';
+                });
+            });
+            
+            // Add keyboard shortcuts info
+            const shortcutsInfo = document.createElement('div');
+            shortcutsInfo.className = 'fixed bottom-4 right-4 bg-black/80 text-white p-3 rounded-lg text-xs max-w-xs';
+            shortcutsInfo.innerHTML = `
+                <div class="font-bold mb-2">⌨️ Keyboard Shortcuts:</div>
+                <div>← → : Control masking</div>
+                <div>1-4 : Switch masking modes</div>
+                <div>Space : Toggle auto-demo</div>
+            `;
+            document.body.appendChild(shortcutsInfo);
+            
+            // Auto-hide shortcuts after 10 seconds
+            setTimeout(() => {
+                shortcutsInfo.style.opacity = '0.3';
+                shortcutsInfo.style.pointerEvents = 'none';
+            }, 10000);
+            
+            // Add space bar toggle for auto demo
+            let autoDemoRunning = false;
+            let autoDemoInterval;
+            
+            document.addEventListener('keydown', (e) => {
+                if (e.code === 'Space' && !e.target.matches('input, textarea')) {
+                    e.preventDefault();
+                    if (autoDemoRunning) {
+                        clearInterval(autoDemoInterval);
+                        autoDemoRunning = false;
+                        console.log('⏸️ Auto-demo paused');
+                    } else {
+                        startAutoDemo();
+                        autoDemoRunning = true;
+                        console.log('▶️ Auto-demo started');
+                    }
+                }
+            });
+            
+            console.log('✅ Enhanced SecureID Pro Demo Loaded Successfully!');
+            console.log('🎯 Features: AI Detection, Multiple Masking Modes, Real-time Preview');
+            console.log('🔧 Use arrow keys to control masking, 1-4 to switch modes');
+        }); // <-- Added missing closing brace for DOMContentLoaded
+    </script>
+</body>
+</html>

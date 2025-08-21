@@ -1,0 +1,1989 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureID Pro - Settings</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --electric-blue: #1E90FF;
+            --gold: #FFD700;
+            --gold-secondary: #FFC300;
+            --teal-blue: #007B8A;
+            --cyan: #00BCD4;
+            --deep-purple: #4B0082;
+            --navy-blue: #1F2F46;
+            --dark-charcoal: #1A1A1A;
+            --jet-black: #121212;
+            --platinum-white: #F8F8FF;
+
+            --text-main: var(--platinum-white);
+            --text-accent: var(--gold);
+            --background-main: var(--navy-blue);
+            --background-dark: var(--dark-charcoal);
+            --button-bg: var(--electric-blue);
+            --button-hover: var(--gold);
+            --accent: var(--teal-blue);
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(-100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .floating { animation: float 3s ease-in-out infinite; }
+        .pulsing { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        .slide-in { animation: slideIn 0.5s ease-out; }
+        .fade-in { animation: fadeIn 0.5s ease-in-out; }
+        
+        .btn-3d {
+            position: relative;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 0 0 rgba(0,0,0,0.2);
+        }
+        
+        .btn-3d:active {
+            transform: translateY(5px);
+            box-shadow: 0 2px 0 0 rgba(0,0,0,0.2);
+        }
+        
+        .glass-effect {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .neon-border {
+            box-shadow: 0 0 5px rgba(30, 144, 255, 0.5), 
+                       0 0 20px rgba(30, 144, 255, 0.3), 
+                       0 0 35px rgba(30, 144, 255, 0.1);
+        }
+
+        .sidebar {
+            background: var(--dark-charcoal);
+            border-right: 1px solid var(--teal-blue);
+        }
+
+        .badge {
+            background: var(--gold);
+            color: var(--jet-black);
+        }
+
+        body {
+            background: var(--background-dark);
+            color: var(--text-main);
+        }
+
+        .bg-gradient-to-br {
+            background-image: linear-gradient(to bottom right, var(--background-dark), var(--background-main));
+        }
+
+        .text-accent {
+            color: var(--text-accent);
+        }
+
+        .bg-accent {
+            background-color: var(--accent);
+        }
+
+        .btn-primary {
+            background-color: var(--button-bg);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--button-hover);
+        }
+
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(30, 144, 255, 0.2);
+        }
+
+        #threejs-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.2;
+        }
+
+        .settings-card {
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .settings-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--electric-blue);
+            box-shadow: 0 10px 20px rgba(30, 144, 255, 0.1);
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.1);
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: var(--electric-blue);
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+
+        .tab-button {
+            position: relative;
+            padding: 0.75rem 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .tab-button.active {
+            color: var(--electric-blue);
+        }
+
+        .tab-button.active:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background-color: var(--electric-blue);
+        }
+
+        .form-input {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--electric-blue);
+            box-shadow: 0 0 0 2px rgba(30, 144, 255, 0.2);
+        }
+
+        /* New styles for editable fields */
+        .editable-field {
+            position: relative;
+        }
+        
+        .view-mode {
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .edit-mode {
+            display: none;
+        }
+        
+        .editable-field.editing .view-mode {
+            display: none;
+        }
+        
+        .editable-field.editing .edit-mode {
+            display: block;
+        }
+        
+        .edit-btn {
+            position: absolute;
+            right: 0.5rem;
+            top: 0.5rem;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        .editable-field:hover .edit-btn {
+            opacity: 1;
+        }
+        
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background: var(--dark-charcoal);
+            padding: 2rem;
+            border-radius: 0.5rem;
+            max-width: 500px;
+            width: 90%;
+            border: 1px solid var(--electric-blue);
+        }
+        
+        /* Password strength indicator */
+        .password-strength {
+            height: 4px;
+            margin-top: 0.25rem;
+            border-radius: 2px;
+            transition: all 0.3s;
+        }
+        
+        .strength-0 { width: 20%; background-color: #ef4444; }
+        .strength-1 { width: 40%; background-color: #f97316; }
+        .strength-2 { width: 60%; background-color: #f59e0b; }
+        .strength-3 { width: 80%; background-color: #84cc16; }
+        .strength-4 { width: 100%; background-color: #10b981; }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br">
+    <!-- Three.js Background -->
+    <div id="threejs-background"></div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmationModal" class="modal">
+        <div class="modal-content glass-effect">
+            <h3 class="text-xl font-bold mb-4" id="modalTitle">Confirm Action</h3>
+            <p class="mb-6" id="modalMessage">Are you sure you want to perform this action?</p>
+            <div class="flex justify-end space-x-4">
+                <button id="modalCancel" class="px-4 py-2 rounded-lg glass-effect hover:bg-white/20">Cancel</button>
+                <button id="modalConfirm" class="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="app" class="relative z-10">
+        <!-- Header -->
+        <header class="glass-effect shadow-2xl border-b border-white/10">
+            <div class="container mx-auto px-4 py-6">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <div class="flex items-center mb-4 md:mb-0">
+                        <i class="fas fa-shield-halved text-4xl mr-3 floating text-accent"></i>
+                        <div>
+                            <h1 class="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                                SecureID Pro
+                            </h1>
+                            <p class="text-sm" style="color: var(--text-main);">Application Settings</p>
+                        </div>
+                    </div>
+                    <nav class="flex space-x-4 items-center">
+                        <a href="secureID.html" class="px-4 py-2 rounded-lg glass-effect hover:bg-white/20 transition flex items-center bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600">
+                            <i class="fas fa-home mr-2"></i>Home
+                        </a>
+                        <a href="Dashboard.html" class="px-4 py-2 rounded-lg glass-effect hover:bg-white/20 transition flex items-center">
+                            <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+                        </a>
+                        </a>
+                        <a href="#" class="px-4 py-2 rounded-lg glass-effect bg-white/20 transition flex items-center">
+                            <i class="fas fa-cog mr-2"></i>Settings
+                        </a>
+                    </nav>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="container mx-auto px-4 py-8 flex">
+            <!-- Sidebar -->
+            <div class="sidebar w-64 hidden md:block mr-8 rounded-lg p-4 glass-effect">
+                <h3 class="text-lg font-bold mb-4 text-accent">Settings Menu</h3>
+                <ul class="space-y-2">
+                    <li>
+                        <button class="tab-button w-full text-left active" data-tab="general">
+                            <i class="fas fa-cog mr-2"></i>General Settings
+                        </button>
+                    </li>
+                    <li>
+                        <button class="tab-button w-full text-left" data-tab="security">
+                            <i class="fas fa-shield-alt mr-2"></i>Security
+                        </button>
+                    </li>
+                    <li>
+                        <button class="tab-button w-full text-left" data-tab="privacy">
+                            <i class="fas fa-lock mr-2"></i>Privacy
+                        </button>
+                    </li>
+                    <li>
+                        <button class="tab-button w-full text-left" data-tab="notifications">
+                            <i class="fas fa-bell mr-2"></i>Notifications
+                        </button>
+                    </li>
+                    <li>
+                        <button class="tab-button w-full text-left" data-tab="appearance">
+                            <i class="fas fa-palette mr-2"></i>Appearance
+                        </button>
+                    </li>
+                    <li>
+                        <button class="tab-button w-full text-left" data-tab="account">
+                            <i class="fas fa-user mr-2"></i>Account
+                        </button>
+                    </li>
+                </ul>
+                
+                <div class="mt-8">
+                    <h3 class="text-lg font-bold mb-4 text-accent">Quick Actions</h3>
+                    <button id="saveAllBtn" class="btn-primary w-full py-2 rounded-lg mb-2 btn-3d">
+                        <i class="fas fa-save mr-2"></i>Save Changes
+                    </button>
+                    <button id="resetDefaultsBtn" class="w-full bg-gray-700 py-2 rounded-lg text-sm font-medium">
+                        <i class="fas fa-redo mr-2"></i>Reset to Default
+                    </button>
+                </div>
+
+                <div class="mt-8 p-4 glass-effect rounded-lg">
+                    <h4 class="text-sm font-bold mb-3 text-accent">System Info</h4>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span>Version:</span>
+                            <span class="text-blue-400 font-bold">2.3.1</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Last Updated:</span>
+                            <span class="text-purple-400 font-bold">2024-08-01</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Storage Used:</span>
+                            <span class="text-green-400 font-bold">1.2 GB</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex-1">
+                <!-- Settings Content -->
+                <div class="glass-effect rounded-xl p-6">
+                    <!-- General Settings Tab (Default) -->
+                    <div id="general-tab" class="settings-tab active">
+                        <h2 class="text-2xl font-bold mb-6 flex items-center">
+                            <i class="fas fa-cog text-blue-400 mr-3"></i>
+                            General Settings
+                        </h2>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                            <div class="settings-card glass-effect rounded-xl p-6 fade-in">
+                                <h3 class="text-lg font-semibold mb-4 flex items-center">
+                                    <i class="fas fa-language text-blue-400 mr-2"></i>
+                                    Language & Region
+                                </h3>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">Application Language</label>
+                                        <select class="form-input w-full px-3 py-2 rounded-lg text-sm" id="appLanguage">
+                                            <option value="en-US">English (United States)</option>
+                                            <option value="en-UK">English (UK)</option>
+                                            <option value="es">Spanish</option>
+                                            <option value="fr">French</option>
+                                            <option value="de">German</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">Date Format</label>
+                                        <select class="form-input w-full px-3 py-2 rounded-lg text-sm" id="dateFormat">
+                                            <option value="MM/DD/YYYY">MM/DD/YYYY (US)</option>
+                                            <option value="DD/MM/YYYY">DD/MM/YYYY (European)</option>
+                                            <option value="YYYY-MM-DD">YYYY-MM-DD (ISO)</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">Time Format</label>
+                                        <select class="form-input w-full px-3 py-2 rounded-lg text-sm" id="timeFormat">
+                                            <option value="12h">12-hour (AM/PM)</option>
+                                            <option value="24h">24-hour</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="settings-card glass-effect rounded-xl p-6 fade-in">
+                                <h3 class="text-lg font-semibold mb-4 flex items-center">
+                                    <i class="fas fa-file-export text-purple-400 mr-2"></i>
+                                    Export & Import
+                                </h3>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">Auto-backup Frequency</label>
+                                        <select class="form-input w-full px-3 py-2 rounded-lg text-sm" id="backupFrequency">
+                                            <option value="daily">Daily</option>
+                                            <option value="weekly">Weekly</option>
+                                            <option value="monthly">Monthly</option>
+                                            <option value="never">Never</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">Backup Location</label>
+                                        <div class="editable-field">
+                                            <div class="view-mode flex justify-between items-center">
+                                                <span id="backupLocationView">~/secureid_backups</span>
+                                                <button class="edit-btn px-2 py-1 rounded text-xs glass-effect hover:bg-white/20">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                            </div>
+                                            <div class="edit-mode">
+                                                <input type="text" class="form-input w-full px-3 py-2 rounded-lg text-sm" 
+                                                       id="backupLocationInput" value="~/secureid_backups">
+                                                <div class="flex justify-end space-x-2 mt-2">
+                                                    <button class="cancel-edit px-2 py-1 rounded text-xs glass-effect hover:bg-white/20">Cancel</button>
+                                                    <button class="save-edit px-2 py-1 rounded text-xs bg-blue-500 hover:bg-blue-600">Save</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex space-x-3 pt-2">
+                                        <button class="btn-primary px-4 py-2 rounded-lg text-sm" id="exportSettingsBtn">
+                                            <i class="fas fa-file-export mr-2"></i>Export Settings
+                                        </button>
+                                        <button class="px-4 py-2 rounded-lg glass-effect hover:bg-white/20 text-sm" id="importSettingsBtn">
+                                            <i class="fas fa-file-import mr-2"></i>Import Settings
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-card glass-effect rounded-xl p-6 mb-6 fade-in">
+                            <h3 class="text-lg font-semibold mb-4 flex items-center">
+                                <i class="fas fa-sliders-h text-green-400 mr-2"></i>
+                                Performance Settings
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <div class="flex justify-between items-center mb-2">
+                                        <label class="text-sm font-medium">OCR Processing Priority</label>
+                                        <span class="text-xs text-blue-400" id="ocrPriorityValue">High</span>
+                                    </div>
+                                    <input type="range" min="0" max="2" value="2" class="w-full" id="ocrPrioritySlider">
+                                    <div class="flex justify-between text-xs text-gray-400 mt-1">
+                                        <span>Low</span>
+                                        <span>Medium</span>
+                                        <span>High</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between items-center mb-2">
+                                        <label class="text-sm font-medium">Cache Size</label>
+                                        <span class="text-xs text-purple-400" id="cacheSizeValue">500 MB</span>
+                                    </div>
+                                    <input type="range" min="100" max="1000" step="100" value="500" class="w-full" id="cacheSizeSlider">
+                                    <div class="flex justify-between text-xs text-gray-400 mt-1">
+                                        <span>100 MB</span>
+                                        <span>500 MB</span>
+                                        <span>1 GB</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Security Settings Tab -->
+                    <div id="security-tab" class="settings-tab hidden">
+                        <h2 class="text-2xl font-bold mb-6 flex items-center">
+                            <i class="fas fa-shield-alt text-green-400 mr-3"></i>
+                            Security Settings
+                        </h2>
+                        
+                        <div class="settings-card glass-effect rounded-xl p-6 mb-6 fade-in">
+                            <h3 class="text-lg font-semibold mb-4 flex items-center">
+                                <i class="fas fa-lock text-red-400 mr-2"></i>
+                                Authentication
+                            </h3>
+                            <div class="space-y-4">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <label class="block text-sm font-medium">Two-Factor Authentication</label>
+                                        <p class="text-xs text-gray-400">Add an extra layer of security to your account</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="twoFactorToggle" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <label class="block text-sm font-medium">Password Protection</label>
+                                        <p class="text-xs text-gray-400">Require password for sensitive actions</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="passwordProtectionToggle">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <label class="block text-sm font-medium">Auto-logout</label>
+                                        <p class="text-xs text-gray-400">Logout after period of inactivity</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="autoLogoutToggle" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Auto-logout Time</label>
+                                    <select class="form-input w-full px-3 py-2 rounded-lg text-sm" id="autoLogoutTime">
+                                        <option value="5">5 minutes</option>
+                                        <option value="15">15 minutes</option>
+                                        <option value="30">30 minutes</option>
+                                        <option value="60">1 hour</option>
+                                        <option value="120">2 hours</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-card glass-effect rounded-xl p-6 mb-6 fade-in">
+                            <h3 class="text-lg font-semibold mb-4 flex items-center">
+                                <i class="fas fa-key text-yellow-400 mr-2"></i>
+                                Password Settings
+                            </h3>
+                            <div class="space-y-4">
+                                <div class="editable-field">
+                                    <label class="block text-sm font-medium mb-2">Current Password</label>
+                                    <div class="view-mode flex items-center">
+                                        <span>••••••••</span>
+                                        <button class="edit-btn px-2 py-1 rounded text-xs glass-effect hover:bg-white/20">
+                                            <i class="fas fa-edit"></i> Change
+                                        </button>
+                                    </div>
+                                    <div class="edit-mode">
+                                        <input type="password" class="form-input w-full px-3 py-2 rounded-lg text-sm" 
+                                               placeholder="Enter current password" id="currentPassword">
+                                        <div class="mt-4">
+                                            <label class="block text-sm font-medium mb-2">New Password</label>
+                                            <input type="password" class="form-input w-full px-3 py-2 rounded-lg text-sm" 
+                                                   placeholder="Enter new password" id="newPassword">
+                                            <div class="password-strength strength-0" id="passwordStrength"></div>
+                                            <p class="text-xs text-gray-400 mt-1">
+                                                Password strength: <span id="passwordStrengthText">Weak</span>
+                                            </p>
+                                        </div>
+                                        <div class="mt-2">
+                                            <label class="block text-sm font-medium mb-2">Confirm New Password</label>
+                                            <input type="password" class="form-input w-full px-3 py-2 rounded-lg text-sm" 
+                                                   placeholder="Confirm new password" id="confirmPassword">
+                                            <p class="text-xs text-red-400 mt-1 hidden" id="passwordMismatch">
+                                                Passwords do not match
+                                            </p>
+                                        </div>
+                                        <div class="flex justify-end space-x-2 mt-4">
+                                            <button class="cancel-edit px-3 py-1 rounded text-sm glass-effect hover:bg-white/20">Cancel</button>
+                                            <button class="save-edit px-3 py-1 rounded text-sm bg-blue-500 hover:bg-blue-600" id="savePasswordBtn">
+                                                Save Password
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Privacy Settings Tab -->
+                    <div id="privacy-tab" class="settings-tab hidden">
+                        <h2 class="text-2xl font-bold mb-6 flex items-center">
+                            <i class="fas fa-lock text-purple-400 mr-3"></i>
+                            Privacy Settings
+                        </h2>
+                        
+                        <div class="settings-card glass-effect rounded-xl p-6 mb-6 fade-in">
+                            <h3 class="text-lg font-semibold mb-4 flex items-center">
+                                <i class="fas fa-user-secret text-blue-400 mr-2"></i>
+                                Data Collection
+                            </h3>
+                            <div class="space-y-4">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <label class="block text-sm font-medium">Analytics Collection</label>
+                                        <p class="text-xs text-gray-400">Help improve SecureID Pro by sharing usage data</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="analyticsToggle" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <label class="block text-sm font-medium">Crash Reporting</label>
+                                        <p class="text-xs text-gray-400">Send crash reports to help fix issues</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="crashReportingToggle" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <label class="block text-sm font-medium">Telemetry Data</label>
+                                        <p class="text-xs text-gray-400">Share anonymous performance data</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="telemetryToggle">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-card glass-effect rounded-xl p-6 mb-6 fade-in">
+                            <h3 class="text-lg font-semibold mb-4 flex items-center">
+                                <i class="fas fa-database text-green-400 mr-2"></i>
+                                Data Retention
+                            </h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Processed Document Retention</label>
+                                    <select class="form-input w-full px-3 py-2 rounded-lg text-sm" id="docRetention">
+                                        <option value="30">Keep for 30 days</option>
+                                        <option value="7">Keep for 7 days</option>
+                                        <option value="1">Keep for 1 day</option>
+                                        <option value="0">Delete immediately</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Log File Retention</label>
+                                    <select class="form-input w-full px-3 py-2 rounded-lg text-sm" id="logRetention">
+                                        <option value="90">Keep for 90 days</option>
+                                        <option value="30">Keep for 30 days</option>
+                                        <option value="7">Keep for 7 days</option>
+                                        <option value="0">Delete immediately</option>
+                                    </select>
+                                </div>
+                                <div class="flex justify-between items-center pt-2">
+                                    <div>
+                                        <label class="block text-sm font-medium">Auto-clear Clipboard</label>
+                                        <p class="text-xs text-gray-400">Clear copied sensitive data after 1 minute</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="clipboardToggle" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-card glass-effect rounded-xl p-6 fade-in">
+                            <h3 class="text-lg font-semibold mb-4 flex items-center">
+                                <i class="fas fa-shield-virus text-red-400 mr-2"></i>
+                                Advanced Privacy
+                            </h3>
+                            <div class="space-y-4">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <label class="block text-sm font-medium">Strict Mode</label>
+                                        <p class="text-xs text-gray-400">Enhance privacy at the cost of some functionality</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="strictModeToggle">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <label class="block text-sm font-medium">Local Processing Only</label>
+                                        <p class="text-xs text-gray-400">Never send data to external servers</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="localProcessingToggle" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Privacy Level</label>
+                                    <select class="form-input w-full px-3 py-2 rounded-lg text-sm" id="privacyLevel">
+                                        <option value="standard">Standard (Recommended)</option>
+                                        <option value="enhanced">Enhanced</option>
+                                        <option value="maximum">Maximum</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Notifications Settings Tab -->
+                    <div id="notifications-tab" class="settings-tab hidden">
+                        <h2 class="text-2xl font-bold mb-6 flex items-center">
+                            <i class="fas fa-bell text-yellow-400 mr-3"></i>
+                            Notification Settings
+                        </h2>
+                        
+                        <div class="settings-card glass-effect rounded-xl p-6 mb-6 fade-in">
+                            <h3 class="text-lg font-semibold mb-4 flex items-center">
+                                <i class="fas fa-envelope text-blue-400 mr-2"></i>
+                                Email Notifications
+                            </h3>
+                            <div class="space-y-4">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <label class="block text-sm font-medium">Security Alerts</label>
+                                        <p class="text-xs text-gray-400">Important security notifications</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="emailSecurityToggle" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <label class="block text-sm font-medium">Processing Updates</label>
+                                        <p class="text-xs text-gray-400">Document processing status</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="emailProcessingToggle">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <label class="block text-sm font-medium">Product Updates</label>
+                                        <p class="text-xs text-gray-400">New features and improvements</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="emailUpdatesToggle" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <div class="editable-field">
+                                    <label class="block text-sm font-medium mb-2">Email Address</label>
+                                    <div class="view-mode flex items-center">
+                                        <span id="emailView">user@example.com</span>
+                                        <button class="edit-btn px-2 py-1 rounded text-xs glass-effect hover:bg-white/20">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                    </div>
+                                    <div class="edit-mode">
+                                        <input type="email" class="form-input w-full px-3 py-2 rounded-lg text-sm" 
+                                               id="emailInput" value="user@example.com">
+                                        <div class="flex justify-end space-x-2 mt-2">
+                                            <button class="cancel-edit px-2 py-1 rounded text-xs glass-effect hover:bg-white/20">Cancel</button>
+                                            <button class="save-edit px-2 py-1 rounded text-xs bg-blue-500 hover:bg-blue-600">Save</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-card glass-effect rounded-xl p-6 mb-6 fade-in">
+                            <h3 class="text-lg font-semibold mb-4 flex items-center">
+                                <i class="fas fa-bell text-purple-400 mr-2"></i>
+                                In-App Notifications
+                            </h3>
+                            <div class="space-y-4">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <label class="block text-sm font-medium">Processing Complete</label>
+                                        <p class="text-xs text-gray-400">When document processing finishes</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="inAppProcessingToggle" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <label class="block text-sm font-medium">New Features</label>
+                                        <p class="text-xs text-gray-400">When new features are available</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="inAppFeaturesToggle" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <label class="block text-sm font-medium">Security Warnings</label>
+                                        <p class="text-xs text-gray-400">Important security notifications</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="inAppSecurityToggle" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Notification Sound</label>
+                                    <select class="form-input w-full px-3 py-2 rounded-lg text-sm" id="notificationSound">
+                                        <option value="default">Default</option>
+                                        <option value="chime">Chime</option>
+                                        <option value="alert">Alert</option>
+                                        <option value="none">None</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-card glass-effect rounded-xl p-6 fade-in">
+                            <h3 class="text-lg font-semibold mb-4 flex items-center">
+                                <i class="fas fa-mobile-alt text-green-400 mr-2"></i>
+                                Push Notifications
+                            </h3>
+                            <div class="space-y-4">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <label class="block text-sm font-medium">Enable Push Notifications</label>
+                                        <p class="text-xs text-gray-400">Receive notifications on your devices</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="pushNotificationsToggle">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <label class="block text-sm font-medium">Critical Alerts</label>
+                                        <p class="text-xs text-gray-400">Important security notifications</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="pushCriticalToggle" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Notification Frequency</label>
+                                    <select class="form-input w-full px-3 py-2 rounded-lg text-sm" id="pushFrequency">
+                                        <option value="realtime">Real-time</option>
+                                        <option value="hourly">Hourly Digest</option>
+                                        <option value="daily">Daily Digest</option>
+                                        <option value="weekly">Weekly Summary</option>
+                                    </select>
+                                </div>
+                                <div class="pt-2">
+                                    <button class="btn-primary px-4 py-2 rounded-lg text-sm" id="testNotificationBtn">
+                                        <i class="fas fa-sync-alt mr-2"></i>Test Notification
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Appearance Settings Tab -->
+                    <div id="appearance-tab" class="settings-tab hidden">
+                        <h2 class="text-2xl font-bold mb-6 flex items-center">
+                            <i class="fas fa-palette text-pink-400 mr-3"></i>
+                            Appearance Settings
+                        </h2>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                            <div class="settings-card glass-effect rounded-xl p-6 fade-in">
+                                <h3 class="text-lg font-semibold mb-4 flex items-center">
+                                    <i class="fas fa-moon text-indigo-400 mr-2"></i>
+                                    Theme & Colors
+                                </h3>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">Theme</label>
+                                        <select class="form-input w-full px-3 py-2 rounded-lg text-sm" id="appTheme">
+                                            <option value="dark">Dark (Default)</option>
+                                            <option value="light">Light</option>
+                                            <option value="system">System</option>
+                                            <option value="high-contrast">High Contrast</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">Accent Color</label>
+                                        <div class="flex space-x-2">
+                                            <button class="accent-color w-8 h-8 rounded-full bg-blue-500 border-2 border-blue-300" data-color="blue"></button>
+                                            <button class="accent-color w-8 h-8 rounded-full bg-purple-500 border-2 border-transparent" data-color="purple"></button>
+                                            <button class="accent-color w-8 h-8 rounded-full bg-green-500 border-2 border-transparent" data-color="green"></button>
+                                            <button class="accent-color w-8 h-8 rounded-full bg-red-500 border-2 border-transparent" data-color="red"></button>
+                                            <button class="accent-color w-8 h-8 rounded-full bg-yellow-500 border-2 border-transparent" data-color="yellow"></button>
+                                            <button class="accent-color w-8 h-8 rounded-full bg-pink-500 border-2 border-transparent" data-color="pink"></button>
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-between items-center pt-2">
+                                        <div>
+                                            <label class="block text-sm font-medium">Transparency Effects</label>
+                                            <p class="text-xs text-gray-400">Glass and blur effects</p>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" id="transparencyEffectsToggle" checked>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="settings-card glass-effect rounded-xl p-6 fade-in">
+                                <h3 class="text-lg font-semibold mb-4 flex items-center">
+                                    <i class="fas fa-text-height text-teal-400 mr-2"></i>
+                                    Text & Display
+                                </h3>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">Font Size</label>
+                                        <select class="form-input w-full px-3 py-2 rounded-lg text-sm" id="fontSize">
+                                            <option value="medium">Medium (Default)</option>
+                                            <option value="small">Small</option>
+                                            <option value="large">Large</option>
+                                            <option value="xlarge">Extra Large</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">Font Family</label>
+                                        <select class="form-input w-full px-3 py-2 rounded-lg text-sm" id="fontFamily">
+                                            <option value="system">System Default</option>
+                                            <option value="roboto">Roboto</option>
+                                            <option value="open-sans">Open Sans</option>
+                                            <option value="inter">Inter</option>
+                                            <option value="monospace">Monospace</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">UI Density</label>
+                                        <select class="form-input w-full px-3 py-2 rounded-lg text-sm" id="uiDensity">
+                                            <option value="normal">Normal</option>
+                                            <option value="compact">Compact</option>
+                                            <option value="spacious">Spacious</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-card glass-effect rounded-xl p-6 mb-6 fade-in">
+                            <h3 class="text-lg font-semibold mb-4 flex items-center">
+                                <i class="fas fa-desktop text-blue-400 mr-2"></i>
+                                Layout & Customization
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Sidebar Position</label>
+                                    <select class="form-input w-full px-3 py-2 rounded-lg text-sm" id="sidebarPosition">
+                                        <option value="left">Left (Default)</option>
+                                        <option value="right">Right</option>
+                                        <option value="collapsed">Collapsed</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Default View</label>
+                                    <select class="form-input w-full px-3 py-2 rounded-lg text-sm" id="defaultView">
+                                        <option value="dashboard">Dashboard</option>
+                                        <option value="documents">Documents</option>
+                                        <option value="recent">Recent</option>
+                                    </select>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <label class="block text-sm font-medium">Show Tooltips</label>
+                                        <p class="text-xs text-gray-400">Helpful hints and explanations</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="tooltipsToggle" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <label class="block text-sm font-medium">Animations</label>
+                                        <p class="text-xs text-gray-400">Interface animations and transitions</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="animationsToggle" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Account Settings Tab -->
+                    <div id="account-tab" class="settings-tab hidden">
+                        <h2 class="text-2xl font-bold mb-6 flex items-center">
+                            <i class="fas fa-user-circle text-blue-400 mr-3"></i>
+                            Account Settings
+                        </h2>
+                        
+                        <div class="settings-card glass-effect rounded-xl p-6 mb-6 fade-in">
+                            <h3 class="text-lg font-semibold mb-4 flex items-center">
+                                <i class="fas fa-id-card text-purple-400 mr-2"></i>
+                                Profile Information
+                            </h3>
+                            <div class="space-y-4">
+                                <div class="flex items-center space-x-4">
+                                    <div class="relative">
+                                        <img src="https://via.placeholder.com/80" alt="Profile" class="w-20 h-20 rounded-full border-2 border-blue-400">
+                                        <button class="absolute bottom-0 right-0 bg-blue-500 rounded-full p-1 hover:bg-blue-600" id="changeAvatarBtn">
+                                            <i class="fas fa-camera text-white text-xs"></i>
+                                        </button>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium" id="profileName">John Doe</p>
+                                        <p class="text-sm text-gray-400">Premium Member</p>
+                                    </div>
+                                </div>
+                                <div class="editable-field">
+                                    <label class="block text-sm font-medium mb-2">Full Name</label>
+                                    <div class="view-mode flex items-center">
+                                        <span id="fullNameView">John Doe</span>
+                                        <button class="edit-btn px-2 py-1 rounded text-xs glass-effect hover:bg-white/20">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                    </div>
+                                    <div class="edit-mode">
+                                        <input type="text" class="form-input w-full px-3 py-2 rounded-lg text-sm" 
+                                               id="fullNameInput" value="John Doe">
+                                        <div class="flex justify-end space-x-2 mt-2">
+                                            <button class="cancel-edit px-2 py-1 rounded text-xs glass-effect hover:bg-white/20">Cancel</button>
+                                            <button class="save-edit px-2 py-1 rounded text-xs bg-blue-500 hover:bg-blue-600">Save</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="editable-field">
+                                    <label class="block text-sm font-medium mb-2">Email Address</label>
+                                    <div class="view-mode flex items-center">
+                                        <span id="profileEmailView">john.doe@example.com</span>
+                                        <button class="edit-btn px-2 py-1 rounded text-xs glass-effect hover:bg-white/20">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                    </div>
+                                    <div class="edit-mode">
+                                        <input type="email" class="form-input w-full px-3 py-2 rounded-lg text-sm" 
+                                               id="profileEmailInput" value="john.doe@example.com">
+                                        <div class="flex justify-end space-x-2 mt-2">
+                                            <button class="cancel-edit px-2 py-1 rounded text-xs glass-effect hover:bg-white/20">Cancel</button>
+                                            <button class="save-edit px-2 py-1 rounded text-xs bg-blue-500 hover:bg-blue-600">Save</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="editable-field">
+                                    <label class="block text-sm font-medium mb-2">Bio</label>
+                                    <div class="view-mode flex items-center">
+                                        <span id="bioView">Security enthusiast and privacy advocate</span>
+                                        <button class="edit-btn px-2 py-1 rounded text-xs glass-effect hover:bg-white/20">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                    </div>
+                                    <div class="edit-mode">
+                                        <textarea class="form-input w-full px-3 py-2 rounded-lg text-sm" rows="3" 
+                                                  id="bioInput">Security enthusiast and privacy advocate</textarea>
+                                        <div class="flex justify-end space-x-2 mt-2">
+                                            <button class="cancel-edit px-2 py-1 rounded text-xs glass-effect hover:bg-white/20">Cancel</button>
+                                            <button class="save-edit px-2 py-1 rounded text-xs bg-blue-500 hover:bg-blue-600">Save</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button class="btn-primary px-4 py-2 rounded-lg text-sm" id="updateProfileBtn">
+                                    <i class="fas fa-save mr-2"></i>Update Profile
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-card glass-effect rounded-xl p-6 mb-6 fade-in">
+                            <h3 class="text-lg font-semibold mb-4 flex items-center">
+                                <i class="fas fa-shield-alt text-red-400 mr-2"></i>
+                                Account Security
+                            </h3>
+                            <div class="space-y-4">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <label class="block text-sm font-medium">Two-Factor Authentication</label>
+                                        <p class="text-xs text-gray-400">Enabled via Authenticator App</p>
+                                    </div>
+                                    <button class="px-3 py-1 rounded-lg glass-effect hover:bg-white/20 text-sm" id="manage2FABtn">
+                                        <i class="fas fa-edit mr-1"></i>Manage
+                                    </button>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <label class="block text-sm font-medium">Connected Devices</label>
+                                        <p class="text-xs text-gray-400">3 active sessions</p>
+                                    </div>
+                                    <button class="px-3 py-1 rounded-lg glass-effect hover:bg-white/20 text-sm" id="viewDevicesBtn">
+                                        <i class="fas fa-desktop mr-1"></i>View
+                                    </button>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <label class="block text-sm font-medium">Login History</label>
+                                        <p class="text-xs text-gray-400">Last login: Today, 10:30 AM</p>
+                                    </div>
+                                    <button class="px-3 py-1 rounded-lg glass-effect hover:bg-white/20 text-sm" id="viewLoginHistoryBtn">
+                                        <i class="fas fa-history mr-1"></i>View
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-card glass-effect rounded-xl p-6 mb-6 fade-in">
+                            <h3 class="text-lg font-semibold mb-4 flex items-center">
+                                <i class="fas fa-credit-card text-green-400 mr-2"></i>
+                                Subscription
+                            </h3>
+                            <div class="space-y-4">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <label class="block text-sm font-medium">Plan</label>
+                                        <p class="text-sm">Premium <span class="text-green-400">(Active)</span></p>
+                                    </div>
+                                    <span class="text-sm font-medium">$9.99/month</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <label class="block text-sm font-medium">Billing Cycle</label>
+                                        <p class="text-sm">Monthly</p>
+                                    </div>
+                                    <button class="px-3 py-1 rounded-lg glass-effect hover:bg-white/20 text-sm" id="changeBillingCycleBtn">
+                                        Change
+                                    </button>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium">Next Billing Date</label>
+                                    <p class="text-sm">September 15, 2024</p>
+                                </div>
+                                <div class="pt-4">
+                                    <button class="btn-primary w-full py-2 rounded-lg" id="upgradePlanBtn">
+                                        <i class="fas fa-crown mr-2"></i>Upgrade Plan
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-card glass-effect rounded-xl p-6 fade-in">
+                            <h3 class="text-lg font-semibold mb-4 flex items-center">
+                                <i class="fas fa-exclamation-triangle text-yellow-400 mr-2"></i>
+                                Danger Zone
+                            </h3>
+                            <div class="space-y-4">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <label class="block text-sm font-medium">Delete All Data</label>
+                                        <p class="text-xs text-gray-400">Permanently remove all your documents and data</p>
+                                    </div>
+                                    <button class="delete-data-btn px-3 py-1 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-400 text-sm">
+                                        <i class="fas fa-trash mr-1"></i>Delete
+                                    </button>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <label class="block text-sm font-medium">Deactivate Account</label>
+                                        <p class="text-xs text-gray-400">Temporarily disable your account</p>
+                                    </div>
+                                    <button class="deactivate-account-btn px-3 py-1 rounded-lg bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-400 text-sm">
+                                        <i class="fas fa-power-off mr-1"></i>Deactivate
+                                    </button>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <label class="block text-sm font-medium">Delete Account</label>
+                                        <p class="text-xs text-gray-400">Permanently delete your SecureID Pro account</p>
+                                    </div>
+                                    <button class="delete-account-btn px-3 py-1 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-400 text-sm">
+                                        <i class="fas fa-user-slash mr-1"></i>Delete Account
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end mt-6">
+                        <button id="saveAllChangesBtn" class="btn-primary px-6 py-3 rounded-lg font-medium btn-3d">
+                            <i class="fas fa-save mr-2"></i>Save All Changes
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="glass-effect mt-16 border-t border-white/10">
+            <div class="container mx-auto px-4 py-8">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <div class="mb-6 md:mb-0">
+                        <div class="flex items-center mb-2">
+                            <i class="fas fa-shield-halved text-2xl mr-2 text-blue-400"></i>
+                            <span class="text-xl font-bold">SecureID Pro</span>
+                        </div>
+                        <p class="text-gray-400">Advanced privacy protection for the digital age.</p>
+                    </div>
+                    <div class="flex space-x-6">
+                        <a href="#" class="text-gray-400 hover:text-white transition">
+                            <i class="fab fa-github text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition">
+                            <i class="fab fa-linkedin text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition">
+                            <i class="fab fa-twitter text-xl"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="border-t border-gray-700 mt-6 pt-6 text-center text-gray-400 text-sm">
+                    <p>&copy; 2024 SecureID Pro. All rights reserved. | Settings v2.0</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Real-time Data Saving System
+        class RealTimeDataSaver {
+            constructor() {
+                this.storageKey = 'secureid_pro_settings';
+                this.debounceDelay = 300; // ms delay before saving
+                this.debounceTimers = new Map();
+                this.autoSaveIndicator = null;
+                
+                this.init();
+            }
+
+            init() {
+                this.createAutoSaveIndicator();
+                this.loadSavedData();
+                this.attachEventListeners();
+                console.log('Real-time data saving initialized');
+            }
+
+            // Create a subtle auto-save indicator
+            createAutoSaveIndicator() {
+                const indicator = document.createElement('div');
+                indicator.id = 'autosave-indicator';
+                indicator.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: rgba(30, 144, 255, 0.9);
+                    color: white;
+                    padding: 8px 16px;
+                    border-radius: 20px;
+                    font-size: 12px;
+                    font-weight: 500;
+                    z-index: 1001;
+                    opacity: 0;
+                    transition: opacity 0.3s ease;
+                    backdrop-filter: blur(10px);
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                `;
+                indicator.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Auto-saved';
+                document.body.appendChild(indicator);
+                this.autoSaveIndicator = indicator;
+            }
+
+            // Show auto-save indicator briefly
+            showSaveIndicator() {
+                if (this.autoSaveIndicator) {
+                    this.autoSaveIndicator.style.opacity = '1';
+                    setTimeout(() => {
+                        this.autoSaveIndicator.style.opacity = '0';
+                    }, 2000);
+                }
+            }
+
+            // Get all form elements that should be auto-saved
+            getFormElements() {
+                const selectors = [
+                    'input[type="text"]',
+                    'input[type="email"]',
+                    'input[type="password"]',
+                    'input[type="range"]',
+                    'input[type="checkbox"]',
+                    'input[type="radio"]',
+                    'select',
+                    'textarea'
+                ];
+                
+                return document.querySelectorAll(selectors.join(', '));
+            }
+
+            // Generate unique key for form element
+            getElementKey(element) {
+                // Use id, name, or generate from parent context
+                if (element.id) return element.id;
+                if (element.name) return element.name;
+                
+                // Generate key based on parent context and type
+                const parent = element.closest('.settings-card, .editable-field, .modal-content');
+                const parentClass = parent ? parent.className.split(' ')[0] : 'general';
+                const elementType = element.type || element.tagName.toLowerCase();
+                const index = Array.from(parent?.querySelectorAll(element.tagName) || [element]).indexOf(element);
+                
+                return `${parentClass}_${elementType}_${index}`;
+            }
+
+            // Load saved data from localStorage
+            loadSavedData() {
+                try {
+                    const savedData = localStorage.getItem(this.storageKey);
+                    if (!savedData) return;
+
+                    const data = JSON.parse(savedData);
+                    
+                    this.getFormElements().forEach(element => {
+                        const key = this.getElementKey(element);
+                        if (data.hasOwnProperty(key)) {
+                            this.setElementValue(element, data[key]);
+                        }
+                    });
+
+                    console.log('Saved data loaded successfully');
+                } catch (error) {
+                    console.warn('Failed to load saved data:', error);
+                }
+            }
+
+            // Set element value based on type
+            setElementValue(element, value) {
+                switch (element.type) {
+                    case 'checkbox':
+                        element.checked = value === true;
+                        break;
+                    case 'radio':
+                        element.checked = element.value === value;
+                        break;
+                    case 'range':
+                        element.value = value;
+                        // Trigger change event to update any connected displays
+                        element.dispatchEvent(new Event('input', { bubbles: true }));
+                        break;
+                    default:
+                        element.value = value;
+                }
+            }
+
+            // Get element value based on type
+            getElementValue(element) {
+                switch (element.type) {
+                    case 'checkbox':
+                        return element.checked;
+                    case 'radio':
+                        return element.checked ? element.value : null;
+                    default:
+                        return element.value;
+                }
+            }
+
+            // Save data with debouncing
+            saveData(elementKey = null) {
+                if (elementKey) {
+                    // Clear existing timer for this element
+                    if (this.debounceTimers.has(elementKey)) {
+                        clearTimeout(this.debounceTimers.get(elementKey));
+                    }
+
+                    // Set new timer
+                    const timer = setTimeout(() => {
+                        this.performSave();
+                        this.debounceTimers.delete(elementKey);
+                    }, this.debounceDelay);
+
+                    this.debounceTimers.set(elementKey, timer);
+                } else {
+                    this.performSave();
+                }
+            }
+
+            // Perform the actual save operation
+            performSave() {
+                try {
+                    const data = {};
+                    
+                    this.getFormElements().forEach(element => {
+                        const key = this.getElementKey(element);
+                        const value = this.getElementValue(element);
+                        
+                        // Only save non-null values for radio buttons
+                        if (element.type === 'radio' && value === null) {
+                            return;
+                        }
+                        
+                        data[key] = value;
+                    });
+
+                    localStorage.setItem(this.storageKey, JSON.stringify(data));
+                    this.showSaveIndicator();
+                    
+                    console.log('Data auto-saved');
+                } catch (error) {
+                    console.error('Failed to save data:', error);
+                }
+            }
+
+            // Attach event listeners to form elements
+            attachEventListeners() {
+                this.getFormElements().forEach(element => {
+                    const key = this.getElementKey(element);
+                    
+                    // Different events for different element types
+                    const events = this.getEventsForElement(element);
+                    
+                    events.forEach(eventType => {
+                        element.addEventListener(eventType, (e) => {
+                            this.saveData(key);
+                        });
+                    });
+                });
+
+                // Also listen for dynamically added elements
+                document.addEventListener('input', (e) => {
+                    if (this.isFormElement(e.target)) {
+                        const key = this.getElementKey(e.target);
+                        this.saveData(key);
+                    }
+                });
+
+                document.addEventListener('change', (e) => {
+                    if (this.isFormElement(e.target)) {
+                        const key = this.getElementKey(e.target);
+                        this.saveData(key);
+                    }
+                });
+            }
+
+            // Get appropriate events for element type
+            getEventsForElement(element) {
+                switch (element.type) {
+                    case 'checkbox':
+                    case 'radio':
+                    case 'range':
+                        return ['change'];
+                    case 'select-one':
+                    case 'select-multiple':
+                        return ['change'];
+                    default:
+                        return ['input', 'blur'];
+                }
+            }
+
+            // Check if element is a form element we care about
+            isFormElement(element) {
+                const formTypes = ['INPUT', 'SELECT', 'TEXTAREA'];
+                return formTypes.includes(element.tagName);
+            }
+
+            // Handle editable fields specially
+            setupEditableFields() {
+                document.querySelectorAll('.editable-field').forEach(field => {
+                    const saveBtn = field.querySelector('.save-edit');
+                    const cancelBtn = field.querySelector('.cancel-edit');
+                    const input = field.querySelector('.edit-mode input, .edit-mode textarea');
+                    const view = field.querySelector('.view-mode span');
+
+                    if (saveBtn && input && view) {
+                        // Save to localStorage when user saves editable field
+                        const originalSaveHandler = saveBtn.onclick;
+                        saveBtn.addEventListener('click', (e) => {
+                            // Let original handler run first
+                            if (originalSaveHandler) {
+                                originalSaveHandler.call(saveBtn, e);
+                            }
+                            
+                            // Then save our data
+                            const key = this.getElementKey(input);
+                            this.saveData(key);
+                        });
+
+                        // Also save while typing in edit mode
+                        input.addEventListener('input', () => {
+                            const key = this.getElementKey(input);
+                            this.saveData(key);
+                        });
+                    }
+                });
+            }
+
+            // Clear all saved data
+            clearSavedData() {
+                localStorage.removeItem(this.storageKey);
+                console.log('All saved data cleared');
+            }
+
+            // Export saved data
+            exportData() {
+                try {
+                    const data = localStorage.getItem(this.storageKey);
+                    if (data) {
+                        const blob = new Blob([data], { type: 'application/json' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'secureid_settings_backup.json';
+                        a.click();
+                        URL.revokeObjectURL(url);
+                    }
+                } catch (error) {
+                    console.error('Failed to export data:', error);
+                }
+            }
+
+            // Import data from file
+            importData(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        try {
+                            const data = JSON.parse(e.target.result);
+                            localStorage.setItem(this.storageKey, JSON.stringify(data));
+                            this.loadSavedData();
+                            resolve();
+                        } catch (error) {
+                            reject(error);
+                        }
+                    };
+                    reader.readAsText(file);
+                });
+            }
+        }
+
+        // Three.js Background Animation
+        function initThreeJS() {
+            const container = document.getElementById('threejs-background');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            // Scene
+            const scene = new THREE.Scene();
+            
+            // Camera
+            const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+            camera.position.z = 30;
+            
+            // Renderer
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(width, height);
+            container.appendChild(renderer.domElement);
+            
+            // Particles
+            const particlesGeometry = new THREE.BufferGeometry();
+            const particleCount = 800;
+            
+            const posArray = new Float32Array(particleCount * 3);
+            const colorArray = new Float32Array(particleCount * 3);
+            
+            for(let i = 0; i < particleCount * 3; i++) {
+                posArray[i] = (Math.random() - 0.5) * 80;
+                colorArray[i] = Math.random();
+            }
+            
+            particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+            particlesGeometry.setAttribute('color', new THREE.BufferAttribute(colorArray, 3));
+            
+            const particlesMaterial = new THREE.PointsMaterial({
+                size: 0.3,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.6,
+                blending: THREE.AdditiveBlending
+            });
+            
+            const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+            scene.add(particlesMesh);
+            
+            // Animation loop
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                particlesMesh.rotation.x += 0.0003;
+                particlesMesh.rotation.y += 0.0007;
+                
+                renderer.render(scene, camera);
+            }
+            
+            // Handle resize
+            window.addEventListener('resize', () => {
+                const width = container.clientWidth;
+                const height = container.clientHeight;
+                
+                camera.aspect = width / height;
+                camera.updateProjectionMatrix();
+                renderer.setSize(width, height);
+            });
+            
+            animate();
+        }
+
+        // Tab switching functionality
+        function setupTabs() {
+            const tabButtons = document.querySelectorAll('.tab-button');
+            
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    // Remove active class from all buttons and tabs
+                    document.querySelectorAll('.tab-button').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                    document.querySelectorAll('.settings-tab').forEach(tab => {
+                        tab.classList.add('hidden');
+                    });
+                    
+                    // Add active class to clicked button
+                    button.classList.add('active');
+                    
+                    // Show corresponding tab
+                    const tabId = button.getAttribute('data-tab') + '-tab';
+                    document.getElementById(tabId).classList.remove('hidden');
+                });
+            });
+        }
+
+        // Editable fields functionality
+        function setupEditableFields() {
+            document.querySelectorAll('.editable-field').forEach(field => {
+                const editBtn = field.querySelector('.edit-btn');
+                const cancelBtn = field.querySelector('.cancel-edit');
+                const saveBtn = field.querySelector('.save-edit');
+                
+                if (editBtn) {
+                    editBtn.addEventListener('click', () => {
+                        field.classList.add('editing');
+                    });
+                }
+                
+                if (cancelBtn) {
+                    cancelBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        field.classList.remove('editing');
+                    });
+                }
+                
+                if (saveBtn) {
+                    saveBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        // Get the input value and update the view
+                        const input = field.querySelector('.edit-mode input, .edit-mode textarea');
+                        if (input) {
+                            const view = field.querySelector('.view-mode span');
+                            if (view) {
+                                view.textContent = input.value;
+                            }
+                        }
+                        field.classList.remove('editing');
+                        // In a real app, you would save to server here
+                    });
+                }
+            });
+        }
+
+        // Password strength checker
+        function checkPasswordStrength(password) {
+            let strength = 0;
+            
+            // Length check
+            if (password.length >= 8) strength++;
+            if (password.length >= 12) strength++;
+            
+            // Character variety checks
+            if (/[A-Z]/.test(password)) strength++;
+            if (/[0-9]/.test(password)) strength++;
+            if (/[^A-Za-z0-9]/.test(password)) strength++;
+            
+            // Cap at 4 for our meter
+            return Math.min(strength, 4);
+        }
+
+        // Setup password strength indicator
+        function setupPasswordStrength() {
+            const newPassword = document.getElementById('newPassword');
+            const confirmPassword = document.getElementById('confirmPassword');
+            const strengthMeter = document.getElementById('passwordStrength');
+            const strengthText = document.getElementById('passwordStrengthText');
+            const mismatchText = document.getElementById('passwordMismatch');
+            const saveBtn = document.getElementById('savePasswordBtn');
+            
+            if (newPassword) {
+                newPassword.addEventListener('input', () => {
+                    const strength = checkPasswordStrength(newPassword.value);
+                    strengthMeter.className = 'password-strength strength-' + strength;
+                    
+                    const strengthLabels = ['Weak', 'Fair', 'Good', 'Strong', 'Very Strong'];
+                    strengthText.textContent = strengthLabels[strength];
+                    
+                    // Enable/disable save button based on strength
+                    if (strength >= 2 && newPassword.value === confirmPassword.value) {
+                        saveBtn.disabled = false;
+                        mismatchText.classList.add('hidden');
+                    } else {
+                        saveBtn.disabled = true;
+                    }
+                });
+            }
+            
+            if (confirmPassword) {
+                confirmPassword.addEventListener('input', () => {
+                    if (newPassword.value !== confirmPassword.value) {
+                        mismatchText.classList.remove('hidden');
+                        saveBtn.disabled = true;
+                    } else {
+                        mismatchText.classList.add('hidden');
+                        if (checkPasswordStrength(newPassword.value) >= 2) {
+                            saveBtn.disabled = false;
+                        }
+                    }
+                });
+            }
+        }
+
+        // Modal functionality
+        function setupModal() {
+            const modal = document.getElementById('confirmationModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalMessage = document.getElementById('modalMessage');
+            const modalCancel = document.getElementById('modalCancel');
+            const modalConfirm = document.getElementById('modalConfirm');
+            
+            let currentAction = null;
+            
+            function showModal(title, message, action) {
+                modalTitle.textContent = title;
+                modalMessage.textContent = message;
+                currentAction = action;
+                modal.style.display = 'flex';
+            }
+            
+            function hideModal() {
+                modal.style.display = 'none';
+                currentAction = null;
+            }
+            
+            // Danger zone buttons
+            document.querySelectorAll('.delete-data-btn, .deactivate-account-btn, .delete-account-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    let title, message;
+                    
+                    if (btn.classList.contains('delete-data-btn')) {
+                        title = 'Delete All Data';
+                        message = 'Are you sure you want to permanently delete all your documents and data? This action cannot be undone.';
+                    } else if (btn.classList.contains('deactivate-account-btn')) {
+                        title = 'Deactivate Account';
+                        message = 'Your account will be temporarily disabled. You can reactivate it by logging in again.';
+                    } else if (btn.classList.contains('delete-account-btn')) {
+                        title = 'Delete Account';
+                        message = 'This will permanently delete your SecureID Pro account and all associated data. This action cannot be undone.';
+                    }
+                    
+                    showModal(title, message, btn.classList[0]);
+                });
+            });
+            
+            // Modal buttons
+            modalCancel.addEventListener('click', hideModal);
+            modalConfirm.addEventListener('click', () => {
+                if (currentAction) {
+                    // In a real app, you would perform the action here
+                    alert(`Action "${currentAction}" would be performed here (simulated)`);
+                    hideModal();
+                }
+            });
+            
+            // Close modal when clicking outside
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    hideModal();
+                }
+            });
+        }
+
+        // Range sliders
+        function setupRangeSliders() {
+            const ocrSlider = document.getElementById('ocrPrioritySlider');
+            const ocrValue = document.getElementById('ocrPriorityValue');
+            const cacheSlider = document.getElementById('cacheSizeSlider');
+            const cacheValue = document.getElementById('cacheSizeValue');
+            
+            if (ocrSlider && ocrValue) {
+                ocrSlider.addEventListener('input', () => {
+                    const values = ['Low', 'Medium', 'High'];
+                    ocrValue.textContent = values[ocrSlider.value];
+                });
+            }
+            
+            if (cacheSlider && cacheValue) {
+                cacheSlider.addEventListener('input', () => {
+                    cacheValue.textContent = cacheSlider.value + ' MB';
+                });
+            }
+        }
+
+        // Save all changes
+        function setupSaveAll() {
+            const saveAllBtn = document.getElementById('saveAllChangesBtn');
+            
+            if (saveAllBtn) {
+                saveAllBtn.addEventListener('click', () => {
+                    // In a real app, you would collect all settings and send to server
+                    alert('All changes saved successfully (simulated)');
+                    
+                    // Show a success message
+                    const originalText = saveAllBtn.innerHTML;
+                    saveAllBtn.innerHTML = '<i class="fas fa-check mr-2"></i>Saved!';
+                    saveAllBtn.classList.remove('btn-primary');
+                    saveAllBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                    
+                    setTimeout(() => {
+                        saveAllBtn.innerHTML = originalText;
+                        saveAllBtn.classList.add('btn-primary');
+                        saveAllBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                    }, 2000);
+                });
+            }
+        }
+
+        // Reset to defaults
+        function setupResetDefaults() {
+            const resetBtn = document.getElementById('resetDefaultsBtn');
+            
+            if (resetBtn) {
+                resetBtn.addEventListener('click', () => {
+                    if (confirm('Are you sure you want to reset all settings to their default values?')) {
+                        // In a real app, you would reset all settings
+                        alert('All settings have been reset to defaults (simulated)');
+                    }
+                });
+            }
+        }
+
+        // Initialize the real-time data saver
+        let dataSaver;
+
+        // Enhanced initialization function to integrate with existing code
+        function initializeRealTimeDataSaving() {
+            dataSaver = new RealTimeDataSaver();
+            
+            // Setup editable fields after DOM is ready
+            setTimeout(() => {
+                dataSaver.setupEditableFields();
+            }, 100);
+
+            // Add import/export functionality to existing buttons
+            const exportBtn = document.getElementById('exportSettingsBtn');
+            const importBtn = document.getElementById('importSettingsBtn');
+
+            if (exportBtn) {
+                exportBtn.addEventListener('click', () => {
+                    dataSaver.exportData();
+                });
+            }
+
+            if (importBtn) {
+                importBtn.addEventListener('click', () => {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = '.json';
+                    input.onchange = (e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                            dataSaver.importData(file)
+                                .then(() => {
+                                    alert('Settings imported successfully!');
+                                })
+                                .catch(() => {
+                                    alert('Failed to import settings. Please check the file format.');
+                                });
+                        }
+                    };
+                    input.click();
+                });
+            }
+
+            // Add clear data functionality to reset button
+            const resetBtn = document.getElementById('resetDefaultsBtn');
+            if (resetBtn) {
+                const originalHandler = resetBtn.onclick;
+                resetBtn.addEventListener('click', () => {
+                    if (confirm('This will also clear all auto-saved data. Continue?')) {
+                        dataSaver.clearSavedData();
+                    }
+                });
+            }
+
+            // Add manual save functionality to save buttons
+            const saveAllBtn = document.getElementById('saveAllChangesBtn');
+            if (saveAllBtn) {
+                saveAllBtn.addEventListener('click', () => {
+                    dataSaver.performSave();
+                });
+            }
+
+            console.log('Real-time data saving fully initialized');
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            initThreeJS();
+            setupTabs();
+            setupEditableFields();
+            setupPasswordStrength();
+            setupModal();
+            setupRangeSliders();
+            setupSaveAll();
+            setupResetDefaults();
+            initializeRealTimeDataSaving();
+            
+            // Add animation to settings cards
+            const cards = document.querySelectorAll('.fade-in');
+            cards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateY(20px)';
+                    card.style.transition = 'all 0.6s ease';
+                    setTimeout(() => {
+                        card.style.opacity = '1';
+                        card.style.transform = 'translateY(0)';
+                    }, 100);
+                }, index * 100);
+            });
+        });
+
+        // Expose global functions for manual control
+        window.SecureIDDataSaver = {
+            save: () => dataSaver?.performSave(),
+            clear: () => dataSaver?.clearSavedData(),
+            export: () => dataSaver?.exportData(),
+            import: (file) => dataSaver?.importData(file)
+        };
+    </script>
+</body>
+</html>

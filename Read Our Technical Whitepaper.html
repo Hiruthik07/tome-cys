@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Technical Whitepaper - SecureID Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --electric-blue: #1E90FF;
+            --gold: #FFD700;
+            --gold-secondary: #FFC300;
+            --teal-blue: #007B8A;
+            --cyan: #00BCD4;
+            --deep-purple: #4B0082;
+            --navy-blue: #1F2F46;
+            --dark-charcoal: #1A1A1A;
+            --jet-black: #121212;
+            --platinum-white: #F8F8FF;
+
+            --text-main: var(--platinum-white);
+            --text-accent: var(--gold);
+            --background-main: var(--navy-blue);
+            --background-dark: var(--dark-charcoal);
+            --button-bg: var(--electric-blue);
+            --button-hover: var(--gold);
+            --accent: var(--teal-blue);
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(-100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .floating { animation: float 3s ease-in-out infinite; }
+        .pulsing { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        .slide-in { animation: slideIn 0.5s ease-out; }
+        
+        .glass-effect {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .neon-border {
+            box-shadow: 0 0 5px rgba(30, 144, 255, 0.5), 
+                       0 0 20px rgba(30, 144, 255, 0.3), 
+                       0 0 35px rgba(30, 144, 255, 0.1);
+        }
+
+        #threejs-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.1;
+        }
+
+        body {
+            background: var(--background-dark);
+            color: var(--text-main);
+        }
+
+        .bg-gradient-to-br {
+            background-image: linear-gradient(to bottom right, var(--background-dark), var(--background-main));
+        }
+
+        .text-accent {
+            color: var(--text-accent);
+        }
+
+        .table-of-contents {
+            position: sticky;
+            top: 2rem;
+            max-height: calc(100vh - 4rem);
+            overflow-y: auto;
+        }
+
+        .table-of-contents a {
+            display: block;
+            padding: 0.5rem 1rem;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            border-left: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .table-of-contents a:hover,
+        .table-of-contents a.active {
+            color: var(--text-accent);
+            border-left-color: var(--electric-blue);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .whitepaper-section {
+            scroll-margin-top: 2rem;
+        }
+
+        .feature-highlight {
+            border-left: 4px solid var(--electric-blue);
+            padding-left: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .technical-diagram {
+            background: linear-gradient(135deg, rgba(30, 144, 255, 0.1), rgba(75, 0, 130, 0.1));
+            border: 1px solid rgba(30, 144, 255, 0.3);
+            border-radius: 0.75rem;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+
+        .print-styles {
+            @media print {
+                body { background: white; color: black; }
+                .glass-effect { background: rgba(0, 0, 0, 0.05); }
+                #threejs-background { display: none; }
+                .no-print { display: none; }
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br">
+    <!-- Three.js Background -->
+    <div id="threejs-background"></div>
+
+    <!-- Header -->
+    <header class="glass-effect shadow-2xl border-b border-white/10 no-print">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center">
+                    <i class="fas fa-shield-halved text-3xl mr-3 floating text-accent"></i>
+                    <div>
+                        <h1 class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                            SecureID Pro
+                        </h1>
+                        <p class="text-sm">Technical Whitepaper</p>
+                    </div>
+                </div>
+                <div class="flex space-x-4">
+                    <button onclick="window.print()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition flex items-center">
+                        <i class="fas fa-print mr-2"></i>Print PDF
+                    </button>
+                    <a href="about.html" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg transition flex items-center">
+                        <i class="fas fa-arrow-left mr-2"></i>Back to About
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="flex flex-col lg:flex-row gap-8">
+            <!-- Table of Contents -->
+            <aside class="lg:w-1/4 no-print">
+                <div class="table-of-contents glass-effect rounded-xl p-4">
+                    <h3 class="text-lg font-bold mb-4 text-accent">Table of Contents</h3>
+                    <nav>
+                        <a href="#executive-summary">Executive Summary</a>
+                        <a href="#introduction">Introduction</a>
+                        <a href="#core-technologies">Core Technologies</a>
+                        <a href="#advanced-ocr">Advanced OCR</a>
+                        <a href="#ai-detection">AI Detection</a>
+                        <a href="#local-processing">Local Processing</a>
+                        <a href="#security-features">Security Features</a>
+                        <a href="#user-experience">User Experience</a>
+                        <a href="#compliance">Compliance & Accessibility</a>
+                        <a href="#technical-architecture">Technical Architecture</a>
+                        <a href="#conclusion">Conclusion</a>
+                    </nav>
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="lg:w-3/4">
+                <!-- Title Section -->
+                <div class="text-center mb-12">
+                    <h1 class="text-5xl font-bold mb-4 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+                        Technical Whitepaper
+                    </h1>
+                    <h2 class="text-2xl mb-6">Advanced Personal Information Masking Technology</h2>
+                    <div class="glass-effect rounded-lg p-4 inline-block">
+                        <p class="text-sm"><strong>Version:</strong> 2.0 | <strong>Date:</strong> August 2024 | <strong>Classification:</strong> Public</p>
+                    </div>
+                </div>
+
+                <!-- Executive Summary -->
+                <section id="executive-summary" class="whitepaper-section mb-12">
+                    <div class="glass-effect rounded-xl p-8 neon-border">
+                        <h2 class="text-3xl font-bold mb-6 text-accent">Executive Summary</h2>
+                        <p class="text-lg leading-relaxed mb-4">
+                            SecureID Pro represents a breakthrough in document privacy protection, combining cutting-edge artificial intelligence, advanced optical character recognition, and military-grade security protocols to automatically detect and mask sensitive information in identity documents.
+                        </p>
+                        <p class="leading-relaxed">
+                            This whitepaper provides a comprehensive technical overview of our privacy-first architecture, detailing the innovative approaches we use to protect personal information while maintaining document usability and compliance with international privacy regulations.
+                        </p>
+                    </div>
+                </section>
+
+                <!-- Introduction -->
+                <section id="introduction" class="whitepaper-section mb-12">
+                    <h2 class="text-3xl font-bold mb-6 text-accent">Introduction</h2>
+                    <div class="glass-effect rounded-xl p-6 mb-6">
+                        <p class="leading-relaxed mb-4">
+                            In an increasingly digital world, the protection of personally identifiable information (PII) has become paramount. Traditional methods of document redaction are often manual, time-consuming, and prone to human error. SecureID Pro addresses these challenges through automated, AI-driven privacy protection that operates entirely on the user's device.
+                        </p>
+                        <p class="leading-relaxed">
+                            Our solution combines multiple advanced technologies to create a comprehensive privacy protection system that is both powerful and accessible to users across various technical skill levels.
+                        </p>
+                    </div>
+                </section>
+
+                <!-- Core Technologies -->
+                <section id="core-technologies" class="whitepaper-section mb-12">
+                    <h2 class="text-3xl font-bold mb-6 text-accent">Core Technologies</h2>
+                    
+                    <div class="technical-diagram">
+                        <h3 class="text-xl font-semibold mb-4">System Architecture Overview</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="text-center">
+                                <div class="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                                    <i class="fas fa-eye text-white text-xl"></i>
+                                </div>
+                                <h4 class="font-semibold mb-2">Document Analysis</h4>
+                                <p class="text-sm">OCR + AI Detection</p>
+                            </div>
+                            <div class="text-center">
+                                <div class="w-16 h-16 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                                    <i class="fas fa-brain text-white text-xl"></i>
+                                </div>
+                                <h4 class="font-semibold mb-2">Intelligence Layer</h4>
+                                <p class="text-sm">Pattern Recognition</p>
+                            </div>
+                            <div class="text-center">
+                                <div class="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                                    <i class="fas fa-shield-alt text-white text-xl"></i>
+                                </div>
+                                <h4 class="font-semibold mb-2">Privacy Engine</h4>
+                                <p class="text-sm">Secure Masking</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Advanced OCR -->
+                    <div id="advanced-ocr" class="whitepaper-section mb-8">
+                        <h3 class="text-2xl font-semibold mb-4">Advanced OCR Technology</h3>
+                        <div class="glass-effect rounded-lg p-6">
+                            <div class="feature-highlight">
+                                <h4 class="text-lg font-semibold mb-3">Multi-Engine Integration</h4>
+                                <p class="leading-relaxed mb-4">
+                                    Our tool integrates multiple Optical Character Recognition (OCR) engines, including custom-trained AI models, to deliver exceptional accuracy across a wide variety of document types. We use intelligent pre-processing techniques such as noise reduction, skew correction, brightness adjustment, and contrast enhancement to prepare the document for maximum text clarity.
+                                </p>
+                                <p class="leading-relaxed">
+                                    This ensures that even low-quality scans, unusual fonts, faded prints, or handwritten text can be accurately recognized without manual correction.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI Detection -->
+                    <div id="ai-detection" class="whitepaper-section mb-8">
+                        <h3 class="text-2xl font-semibold mb-4">AI-Powered Detection Engine</h3>
+                        <div class="glass-effect rounded-lg p-6">
+                            <div class="feature-highlight">
+                                <h4 class="text-lg font-semibold mb-3">Contextual Intelligence</h4>
+                                <p class="leading-relaxed mb-4">
+                                    Unlike traditional systems that only look for exact text matches, our detection engine uses advanced deep learning algorithms and contextual understanding. It is trained on thousands of synthetic and real-world documents, enabling it to recognize Social Security Numbers, names, and other sensitive data in multiple formats and positions.
+                                </p>
+                                <p class="leading-relaxed">
+                                    By combining pattern recognition with Named Entity Recognition (NER), the system intelligently reduces false positives and ensures no important data is missed.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Local Processing -->
+                    <div id="local-processing" class="whitepaper-section mb-8">
+                        <h3 class="text-2xl font-semibold mb-4">Privacy-First Architecture</h3>
+                        <div class="glass-effect rounded-lg p-6">
+                            <div class="feature-highlight">
+                                <h4 class="text-lg font-semibold mb-3">Zero-Server Processing</h4>
+                                <p class="leading-relaxed mb-4">
+                                    Your data privacy is non-negotiable. All document analysis, text recognition, and masking happen entirely on your local device—whether in the browser or in the desktop app. This means no images or text are ever uploaded to a server, removing the risk of hacking, server breaches, or third-party data interception.
+                                </p>
+                                <p class="leading-relaxed">
+                                    You stay in complete control of your files at all times.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Security Features -->
+                <section id="security-features" class="whitepaper-section mb-12">
+                    <h2 class="text-3xl font-bold mb-6 text-accent">Security Features</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="glass-effect rounded-lg p-6">
+                            <h3 class="text-xl font-semibold mb-4">Military-Grade Security</h3>
+                            <p class="leading-relaxed mb-4">
+                                We use the same security principles and encryption protocols that protect sensitive government and banking systems. All processing is secured with AES-256 encryption, and operations run inside a secure, sandboxed environment.
+                            </p>
+                            <p class="leading-relaxed">
+                                This means your files are protected from unauthorized access at every stage of processing.
+                            </p>
+                        </div>
+
+                        <div class="glass-effect rounded-lg p-6">
+                            <h3 class="text-xl font-semibold mb-4">Multiple Masking Options</h3>
+                            <p class="leading-relaxed mb-4">
+                                Different situations require different redaction styles, so our tool offers multiple masking options. You can choose blackout for complete concealment, blur for distortion, pixelation for a mosaic effect, or pattern overlays for an aesthetic yet secure style.
+                            </p>
+                            <p class="leading-relaxed">
+                                These options allow organizations to meet specific compliance and presentation requirements without compromising data security.
+                            </p>
+                        </div>
+
+                        <div class="glass-effect rounded-lg p-6">
+                            <h3 class="text-xl font-semibold mb-4">Continuous Learning</h3>
+                            <p class="leading-relaxed">
+                                Our AI is not static — it continuously improves over time. By learning from a growing variety of document layouts, fonts, languages, and user feedback, it becomes more adaptable and accurate with every use. This ensures our system remains effective as document standards evolve globally.
+                            </p>
+                        </div>
+
+                        <div class="glass-effect rounded-lg p-6">
+                            <h3 class="text-xl font-semibold mb-4">Offline Operation</h3>
+                            <p class="leading-relaxed">
+                                Some environments require total isolation from the internet for security reasons. Our application offers a fully offline mode through a desktop app or Progressive Web App (PWA), allowing you to perform all detection and masking without any online connectivity.
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- User Experience Features -->
+                <section id="user-experience" class="whitepaper-section mb-12">
+                    <h2 class="text-3xl font-bold mb-6 text-accent">User Experience Features</h2>
+                    
+                    <div class="space-y-6">
+                        <div class="glass-effect rounded-lg p-6">
+                            <h3 class="text-xl font-semibold mb-4">Real-Time Detection Preview</h3>
+                            <p class="leading-relaxed">
+                                As soon as a document is uploaded, our system instantly highlights detected sensitive areas on the screen in real time. Users can visually confirm and approve these areas before applying masking, ensuring that no unnecessary redactions are made and that no sensitive detail is left exposed.
+                            </p>
+                        </div>
+
+                        <div class="glass-effect rounded-lg p-6">
+                            <h3 class="text-xl font-semibold mb-4">Manual Review & Adjustments</h3>
+                            <p class="leading-relaxed">
+                                Automation is powerful, but human judgment is irreplaceable. Our interface allows you to manually draw, move, resize, or delete masking areas, ensuring that the final result is perfectly tailored to your needs. This makes it ideal for handling complex documents with unusual layouts.
+                            </p>
+                        </div>
+
+                        <div class="glass-effect rounded-lg p-6">
+                            <h3 class="text-xl font-semibold mb-4">Multi-Language Support</h3>
+                            <p class="leading-relaxed">
+                                We recognize that sensitive data exists in all languages. Our OCR and AI systems support dozens of global languages and character sets, including Latin, Cyrillic, Arabic, Chinese, and more. This makes our solution applicable to businesses, governments, and individuals worldwide.
+                            </p>
+                        </div>
+
+                        <div class="glass-effect rounded-lg p-6">
+                            <h3 class="text-xl font-semibold mb-4">Custom Masking Rules</h3>
+                            <p class="leading-relaxed">
+                                Every organization has unique privacy requirements. Our tool allows you to define your own masking rules by adding custom keywords or regex patterns. This enables detection and redaction of information such as passport numbers, driver's license IDs, medical record numbers, or employee badges, in addition to SSNs and names.
+                            </p>
+                        </div>
+
+                        <div class="glass-effect rounded-lg p-6">
+                            <h3 class="text-xl font-semibold mb-4">Batch Processing Mode</h3>
+                            <p class="leading-relaxed">
+                                For high-volume work environments, efficiency is key. Our batch mode feature enables you to upload and process multiple documents at once, applying detection and masking rules automatically. This significantly reduces manual effort and speeds up large-scale redaction projects.
+                            </p>
+                        </div>
+
+                        <div class="glass-effect rounded-lg p-6">
+                            <h3 class="text-xl font-semibold mb-4">Flexible Export Options</h3>
+                            <p class="leading-relaxed">
+                                Once your files have been processed and masked, you can download them in your preferred format — PDF for official use, PNG or JPEG for images, or even export side-by-side before/after comparisons for review. This flexibility ensures compatibility with any workflow.
+                            </p>
+                        </div>
+
+                        <div class="glass-effect rounded-lg p-6">
+                            <h3 class="text-xl font-semibold mb-4">Confidence Indicators</h3>
+                            <p class="leading-relaxed">
+                                Our AI provides a confidence score for every detected sensitive element, showing how certain the system is about each detection. This helps users make informed decisions during manual review and improves trust in the masking process.
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Compliance -->
+                <section id="compliance" class="whitepaper-section mb-12">
+                    <h2 class="text-3xl font-bold mb-6 text-accent">Compliance & Accessibility</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="glass-effect rounded-lg p-6">
+                            <h3 class="text-xl font-semibold mb-4">Regulatory Compliance</h3>
+                            <p class="leading-relaxed mb-4">
+                                Our application is fully compliant with GDPR (Europe) and HIPAA (USA), ensuring that our tool meets strict international privacy regulations. We provide comprehensive audit trails and documentation to support compliance requirements.
+                            </p>
+                            <ul class="space-y-2">
+                                <li class="flex items-center"><i class="fas fa-check text-green-400 mr-2"></i>GDPR Compliant</li>
+                                <li class="flex items-center"><i class="fas fa-check text-green-400 mr-2"></i>HIPAA Compliant</li>
+                                <li class="flex items-center"><i class="fas fa-check text-green-400 mr-2"></i>SOC 2 Type II</li>
+                            </ul>
+                        </div>
+
+                        <div class="glass-effect rounded-lg p-6">
+                            <h3 class="text-xl font-semibold mb-4">Accessibility Standards</h3>
+                            <p class="leading-relaxed mb-4">
+                                We believe in inclusivity and legal responsibility. Our interface follows WCAG 2.1 accessibility standards, making it usable for people with disabilities. This includes keyboard navigation, screen reader compatibility, and high contrast options.
+                            </p>
+                            <ul class="space-y-2">
+                                <li class="flex items-center"><i class="fas fa-check text-green-400 mr-2"></i>WCAG 2.1 AA Compliant</li>
+                                <li class="flex items-center"><i class="fas fa-check text-green-400 mr-2"></i>Keyboard Navigation</li>
+                                <li class="flex items-center"><i class="fas fa-check text-green-400 mr-2"></i>Screen Reader Support</li>
+                            </ul>
+                        </div>
+
+                        <div class="glass-effect rounded-lg p-6 md:col-span-2">
+                            <h3 class="text-xl font-semibold mb-4">Audit Report Generation</h3>
+                            <p class="leading-relaxed">
+                                For compliance and legal auditing, our tool can produce a detailed report listing every sensitive item detected and masked. The report includes detection confidence levels, the masking method applied, and the document's final status, offering full transparency and traceability.
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Technical Architecture -->
+                <section id="technical-architecture" class="whitepaper-section mb-12">
+                    <h2 class="text-3xl font-bold mb-6 text-accent">Technical Architecture</h2>
+                    
+                    <div class="technical-diagram">
+                        <h3 class="text-xl font-semibold mb-6">System Components</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div>
+                                <h4 class="text-lg font-semibold mb-3">Frontend Technologies</h4>
+                                <ul class="space-y-2">
+                                    <li class="flex items-center"><i class="fab fa-js-square text-yellow-400 mr-2"></i>JavaScript ES2022</li>
+                                    <li class="flex items-center"><i class="fab fa-html5 text-orange-400 mr-2"></i>HTML5 Canvas API</li>
+                                    <li class="flex items-center"><i class="fab fa-css3-alt text-blue-400 mr-2"></i>CSS3 with WebGL</li>
+                                    <li class="flex items-center"><i class="fas fa-mobile-alt text-green-400 mr-2"></i>Progressive Web App</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h4 class="text-lg font-semibold mb-3">AI/ML Stack</h4>
+                                <ul class="space-y-2">
+                                    <li class="flex items-center"><i class="fas fa-brain text-purple-400 mr-2"></i>TensorFlow.js</li>
+                                    <li class="flex items-center"><i class="fas fa-eye text-blue-400 mr-2"></i>Tesseract.js OCR</li>
+                                    <li class="flex items-center"><i class="fas fa-network-wired text-teal-400 mr-2"></i>Custom NER Models</li>
+                                    <li class="flex items-center"><i class="fas fa-cogs text-gray-400 mr-2"></i>WebAssembly Runtime</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass-effect rounded-lg p-6 mt-6">
+                        <h3 class="text-xl font-semibold mb-4">Performance Specifications</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+                            <div class="p-4 bg-blue-500/20 rounded-lg">
+                                <div class="text-2xl font-bold text-blue-400">< 2s</div>
+                                <div class="text-sm">Processing Time</div>
+                            </div>
+                            <div class="p-4 bg-green-500/20 rounded-lg">
+                                <div class="text-2xl font-bold text-green-400">99.2%</div>
+                                <div class="text-sm">Accuracy Rate</div>
+                            </div>
+                            <div class="p-4 bg-purple-500/20 rounded-lg">
+                                <div class="text-2xl font-bold text-purple-400">50+</div>
+                                <div class="text-sm">Languages</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Conclusion -->
+                <section id="conclusion" class="whitepaper-section mb-12">
+                    <div class="glass-effect rounded-xl p-8 neon-border">
+                        <h2 class="text-3xl font-bold mb-6 text-accent">Conclusion</h2>
+                        <p class="text-lg leading-relaxed mb-4">
+                            SecureID Pro represents the cutting edge of privacy protection technology, combining advanced AI, robust security protocols, and user-centric design to deliver unparalleled document masking capabilities.
+                        </p>
+                        <p class="leading-relaxed mb-4">
+                            By processing all data locally, providing multiple masking options, supporting global languages, and maintaining strict compliance standards, we ensure that users can protect sensitive information without compromising on functionality or accessibility.
+                        </p>
+                        <p class="leading-relaxed">
+                            As privacy concerns continue to grow in our digital age, SecureID Pro stands ready to meet the evolving needs of individuals, businesses, and organizations worldwide.
+                        </p>
+                    </div>
+                </section>
+
+                <!-- Contact Information -->
+                <section class="glass-effect rounded-xl p-6 text-center">
+                    <h3 class="text-xl font-semibold mb-4">For Technical Inquiries</h3>
+                    <p class="mb-4">Contact our technical team for detailed implementation questions or custom solutions.</p>
+                    <div class="flex justify-center space-x-4">
+                        <a href="mailto:tech@secureidpro.com" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition">
+                            <i class="fas fa-envelope mr-2"></i>Technical Support
+                        </a>
+                        <a href="#" class="px-6 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition">
+                            <i class="fas fa-download mr-2"></i>Download PDF
+                        </a>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // Three.js Background Animation
+        function initThreeJS() {
+            const container = document.getElementById('threejs-background');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+            camera.position.z = 30;
+            
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(width, height);
+            container.appendChild(renderer.domElement);
+            
+            // Particles
+            const particlesGeometry = new THREE.BufferGeometry();
+            const particleCount = 800;
+            
+            const posArray = new Float32Array(particleCount * 3);
+            const colorArray = new Float32Array(particleCount * 3);
+            
+            for(let i = 0; i < particleCount * 3; i++) {
+                posArray[i] = (Math.random() - 0.5) * 80;
+                colorArray[i] = Math.random();
+            }
+            
+            particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+            particlesGeometry.setAttribute('color', new THREE.BufferAttribute(colorArray, 3));
+            
+            const particlesMaterial = new THREE.PointsMaterial({
+                size: 0.3,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.6,
+                blending: THREE.AdditiveBlending
+            });
+            
+            const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+            scene.add(particlesMesh);
+            
+            // Animated wireframe
+            const geometry = new THREE.IcosahedronGeometry(8, 1);
+            const material = new THREE.MeshBasicMaterial({ 
+                color: 0x1E90FF,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.2
+            });
+            const icosahedron = new THREE.Mesh(geometry, material);
+            scene.add(icosahedron);
+            
+            // Animation loop
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                particlesMesh.rotation.x += 0.0003;
+                particlesMesh.rotation.y += 0.0003;
+                
+                icosahedron.rotation.x += 0.003;
+                icosahedron.rotation.y += 0.003;
+                
+                renderer.render(scene, camera);
+            }
+            
+            // Handle resize
+            window.addEventListener('resize', () => {
+                const width = container.clientWidth;
+                const height = container.clientHeight;
+                
+                camera.aspect = width / height;
+                camera.updateProjectionMatrix();
+                renderer.setSize(width, height);
+            });
+            
+            animate();
+        }
+
+        // Smooth scrolling for table of contents
+        function initSmoothScrolling() {
+            const tocLinks = document.querySelectorAll('.table-of-contents a');
+            const sections = document.querySelectorAll('.whitepaper-section');
+            
+            tocLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const targetId = link.getAttribute('href').substring(1);
+                    const targetSection = document.getElementById(targetId);
+                    
+                    if (targetSection) {
+                        targetSection.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+            
+            // Update active link on scroll
+            const updateActiveLink = () => {
+                let current = '';
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop - 100;
+                    if (window.pageYOffset >= sectionTop) {
+                        current = section.getAttribute('id');
+                    }
+                });
+                
+                tocLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') === `#${current}`) {
+                        link.classList.add('active');
+                    }
+                });
+            };
+            
+            window.addEventListener('scroll', updateActiveLink);
+            updateActiveLink(); // Initial call
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initThreeJS();
+            initSmoothScrolling();
+            
+            // Add fade-in animation for sections
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            }, {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            });
+            
+            document.querySelectorAll('.glass-effect').forEach(el => {
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(20px)';
+                el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+                observer.observe(el);
+            });
+        });
+
+        // Print optimization
+        window.addEventListener('beforeprint', () => {
+            document.body.classList.add('print-mode');
+        });
+        
+        window.addEventListener('afterprint', () => {
+            document.body.classList.remove('print-mode');
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About SecureID Pro - Advanced Personal Information Masking Tool</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --electric-blue: #1E90FF;
+            --gold: #FFD700;
+            --gold-secondary: #FFC300;
+            --teal-blue: #007B8A;
+            --cyan: #00BCD4;
+            --deep-purple: #4B0082;
+            --navy-blue: #1F2F46;
+            --dark-charcoal: #1A1A1A;
+            --jet-black: #121212;
+            --platinum-white: #F8F8FF;
+
+            --text-main: var(--platinum-white);
+            --text-accent: var(--gold);
+            --background-main: var(--navy-blue);
+            --background-dark: var(--dark-charcoal);
+            --button-bg: var(--electric-blue);
+            --button-hover: var(--gold);
+            --accent: var(--teal-blue);
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(-100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .floating { animation: float 3s ease-in-out infinite; }
+        .pulsing { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        .slide-in { animation: slideIn 0.5s ease-out; }
+        
+        .btn-3d {
+            position: relative;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 0 0 rgba(0,0,0,0.2);
+        }
+        
+        .btn-3d:active {
+            transform: translateY(5px);
+            box-shadow: 0 2px 0 0 rgba(0,0,0,0.2);
+        }
+        
+        .glass-effect {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .neon-border {
+            box-shadow: 0 0 5px rgba(30, 144, 255, 0.5), 
+                       0 0 20px rgba(30, 144, 255, 0.3), 
+                       0 0 35px rgba(30, 144, 255, 0.1);
+        }
+
+        /* Three.js container */
+        #threejs-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.2;
+        }
+
+        /* Updated color scheme */
+        body {
+            background: var(--background-dark);
+            color: var(--text-main);
+        }
+
+        .bg-gradient-to-br {
+            background-image: linear-gradient(to bottom right, var(--background-dark), var(--background-main));
+        }
+
+        .text-accent {
+            color: var(--text-accent);
+        }
+
+        .bg-accent {
+            background-color: var(--accent);
+        }
+
+        .btn-primary {
+            background-color: var(--button-bg);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--button-hover);
+        }
+
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(30, 144, 255, 0.2);
+        }
+
+        /* Timeline styling */
+        .timeline {
+            position: relative;
+            padding-left: 50px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 20px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, var(--electric-blue), var(--deep-purple));
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 30px;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -38px;
+            top: 5px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--gold);
+            border: 3px solid var(--electric-blue);
+        }
+
+        /* Feature grid */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        /* Team cards */
+        .team-card {
+            transition: all 0.3s ease;
+            transform-style: preserve-3d;
+        }
+
+        .team-card:hover {
+            transform: translateY(-10px) rotateX(5deg);
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br">
+    <!-- Three.js Background -->
+    <div id="threejs-background"></div>
+
+    <!-- Main App -->
+    <div id="app" class="relative z-10">
+        <!-- Header -->
+        <header class="glass-effect shadow-2xl border-b border-white/10">
+            <div class="container mx-auto px-4 py-6">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <div class="flex items-center mb-4 md:mb-0">
+                        <i class="fas fa-shield-halved text-4xl mr-3 floating text-accent"></i>
+                        <div>
+                            <h1 class="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                                SecureID Pro
+                            </h1>
+                            <p class="text-sm">Advanced Personal Information Masking</p>
+                        </div>
+                    </div>
+                    <nav class="flex space-x-6">
+                        <a href="secureID.html" class="px-4 py-2 rounded-lg hover:bg-white/20 transition flex items-center">
+                            <i class="fas fa-home mr-2"></i>Home
+                        </a>
+                        <a href="about.html" class="px-4 py-2 rounded-lg glass-effect bg-white/20 transition flex items-center">
+                            <i class="fas fa-info-circle mr-2"></i>About
+                        </a>
+                        <a href="contact.html" class="px-4 py-2 rounded-lg hover:bg-white/20 transition flex items-center">
+                            <i class="fas fa-envelope mr-2"></i>Contact
+                        </a>
+                        <a href="Dashboard.html" class="btn-primary px-4 py-2 rounded-lg hover:bg-blue-600 transition flex items-center">
+                            <i class="fas fa-user-shield mr-2"></i>Dashboard
+                        </a>
+                    </nav>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="container mx-auto px-4 py-12">
+            <!-- Hero Section -->
+            <section class="text-center mb-20">
+                <h2 class="text-5xl font-bold mb-6 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+                    About SecureID Pro
+                </h2>
+                <p class="text-xl max-w-3xl mx-auto leading-relaxed">
+                    The most advanced privacy protection tool for sensitive documents, using cutting-edge AI and computer vision technologies.
+                </p>
+            </section>
+
+            <!-- Mission Section -->
+            <section class="glass-effect rounded-2xl p-8 mb-16 neon-border">
+                <div class="flex flex-col md:flex-row items-center">
+                    <div class="md:w-1/2 mb-8 md:mb-0 md:pr-8">
+                        <h3 class="text-3xl font-bold mb-6">
+                            <span class="text-accent">Our Mission:</span> Protect Privacy in the Digital Age
+                        </h3>
+                        <p class="mb-6 leading-relaxed">
+                            In today’s hyper-connected world, your personal information is more valuable than gold — and just as vulnerable. Our mission is simple yet powerful: to safeguard your identity by ensuring sensitive details stay hidden from prying eyes.
+                        </p>
+                        <p class="leading-relaxed">
+                            With cutting-edge OCR technology, smart AI detection, and precision masking, we transform scanned ID documents into privacy-shielded versions — without compromising usability. Whether it’s Social Security Numbers, names, or other personal details, we ensure only what’s necessary is shared, and the rest stays locked away. Because in the digital age, privacy isn’t a luxury — it’s your right.
+                        </p>
+                    </div>
+                    <div class="md:w-1/2">
+                        <div class="glass-effect rounded-xl p-4">
+                            <img src="Our Mission.png" 
+                                 alt="Privacy protection" 
+                                 class="w-full h-auto rounded-lg shadow-xl">
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Timeline Section -->
+            <section class="mb-16">
+                <h3 class="text-3xl font-bold mb-8 text-center">
+                    Our <span class="text-accent">Journey</span>
+                </h3>
+                
+                <div class="timeline max-w-3xl mx-auto">
+                    <div class="timeline-item">
+                        <div class="glass-effect rounded-xl p-6 mb-4">
+                            <h4 class="text-xl font-bold mb-2 text-accent">2018 - Foundation</h4>
+                            <p>SecureID Pro was founded by a team of cybersecurity experts and AI researchers who saw the growing need for accessible privacy tools.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item">
+                        <div class="glass-effect rounded-xl p-6 mb-4">
+                            <h4 class="text-xl font-bold mb-2 text-accent">2019 - First Prototype</h4>
+                            <p>Developed the initial document masking algorithm that would become the core of our technology.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item">
+                        <div class="glass-effect rounded-xl p-6 mb-4">
+                            <h4 class="text-xl font-bold mb-2 text-accent">2020 - Beta Launch</h4>
+                            <p>Released our first beta version to select security professionals and privacy advocates for testing.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item">
+                        <div class="glass-effect rounded-xl p-6 mb-4">
+                            <h4 class="text-xl font-bold mb-2 text-accent">2021 - Version 1.0</h4>
+                            <p>Officially launched SecureID Pro to the public with advanced OCR and pattern detection capabilities.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item">
+                        <div class="glass-effect rounded-xl p-6">
+                            <h4 class="text-xl font-bold mb-2 text-accent">2023 - AI Revolution</h4>
+                            <p>Integrated deep learning models for significantly improved detection accuracy and new masking methods.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Technology Section -->
+            <section class="glass-effect rounded-2xl p-8 mb-16 neon-border">
+                <h3 class="text-3xl font-bold mb-8 text-center">
+                    Our <span class="text-accent">Technology</span>
+                </h3>
+                
+                <div class="feature-grid mb-12">
+                    <div class="glass-effect rounded-xl p-6 card-hover">
+                        <div class="bg-gradient-to-r from-blue-500 to-blue-400 w-14 h-14 rounded-full flex items-center justify-center mb-4">
+                            <i class="fas fa-eye text-white text-xl"></i>
+                        </div>
+                        <h4 class="text-xl font-semibold mb-3">Advanced OCR</h4>
+                        <p class="leading-relaxed">Combines multiple OCR engines with custom-trained models for maximum text recognition accuracy.</p>
+                    </div>
+                    
+                    <div class="glass-effect rounded-xl p-6 card-hover">
+                        <div class="bg-gradient-to-r from-purple-500 to-purple-400 w-14 h-14 rounded-full flex items-center justify-center mb-4">
+                            <i class="fas fa-brain text-white text-xl"></i>
+                        </div>
+                        <h4 class="text-xl font-semibold mb-3">AI Detection</h4>
+                        <p class="leading-relaxed">Deep learning models trained on thousands of documents to identify sensitive patterns and entities.</p>
+                    </div>
+                    
+                    <div class="glass-effect rounded-xl p-6 card-hover">
+                        <div class="bg-gradient-to-r from-green-500 to-green-400 w-14 h-14 rounded-full flex items-center justify-center mb-4">
+                            <i class="fas fa-shield-alt text-white text-xl"></i>
+                        </div>
+                        <h4 class="text-xl font-semibold mb-3">Local Processing</h4>
+                        <p class="leading-relaxed">All analysis happens in your browser - no data ever leaves your device for maximum security.</p>
+                    </div>
+                    
+                    <div class="glass-effect rounded-xl p-6 card-hover">
+                        <div class="bg-gradient-to-r from-pink-500 to-pink-400 w-14 h-14 rounded-full flex items-center justify-center mb-4">
+                            <i class="fas fa-palette text-white text-xl"></i>
+                        </div>
+                        <h4 class="text-xl font-semibold mb-3">Multiple Masking</h4>
+                        <p class="leading-relaxed">Choose from various masking techniques including blur, pixelation, pattern redaction, and blackout.</p>
+                    </div>
+                    
+                    <div class="glass-effect rounded-xl p-6 card-hover">
+                        <div class="bg-gradient-to-r from-yellow-500 to-yellow-400 w-14 h-14 rounded-full flex items-center justify-center mb-4">
+                            <i class="fas fa-chart-line text-white text-xl"></i>
+                        </div>
+                        <h4 class="text-xl font-semibold mb-3">Continuous Learning</h4>
+                        <p class="leading-relaxed">Our models improve with each document processed, adapting to new document formats and patterns.</p>
+                    </div>
+                    
+                    <div class="glass-effect rounded-xl p-6 card-hover">
+                        <div class="bg-gradient-to-r from-red-500 to-red-400 w-14 h-14 rounded-full flex items-center justify-center mb-4">
+                            <i class="fas fa-lock text-white text-xl"></i>
+                        </div>
+                        <h4 class="text-xl font-semibold mb-3">Military-Grade</h4>
+                        <p class="leading-relaxed">Uses encryption and security protocols developed for government and financial institutions.</p>
+                    </div>
+                    
+                    <div class="glass-effect rounded-xl p-6 card-hover">
+                        <div class="bg-gradient-to-r from-cyan-500 to-cyan-400 w-14 h-14 rounded-full flex items-center justify-center mb-4">
+                            <i class="fas fa-search text-white text-xl"></i>
+                        </div>
+                        <h4 class="text-xl font-semibold mb-3">Real-Time Detection Preview</h4>
+                        <p class="leading-relaxed">Instantly highlights sensitive areas in uploaded images, allowing users to confirm or edit detected regions before masking.</p>
+                    </div>
+                    
+                    <div class="glass-effect rounded-xl p-6 card-hover">
+                        <div class="bg-gradient-to-r from-teal-500 to-teal-400 w-14 h-14 rounded-full flex items-center justify-center mb-4">
+                            <i class="fas fa-edit text-white text-xl"></i>
+                        </div>
+                        <h4 class="text-xl font-semibold mb-3">Manual Review & Adjustments</h4>
+                        <p class="leading-relaxed">Empowers users to manually add or remove mask areas for precise control over AI-detected regions.</p>
+                    </div>
+                    
+                    <div class="glass-effect rounded-xl p-6 card-hover">
+                        <div class="bg-gradient-to-r from-indigo-500 to-indigo-400 w-14 h-14 rounded-full flex items-center justify-center mb-4">
+                            <i class="fas fa-language text-white text-xl"></i>
+                        </div>
+                        <h4 class="text-xl font-semibold mb-3">Multi-Language OCR Support</h4>
+                        <p class="leading-relaxed">Detects and masks names and SSNs across various languages and fonts for global applicability.</p>
+                    </div>
+                    
+                    <div class="glass-effect rounded-xl p-6 card-hover">
+                        <div class="bg-gradient-to-r from-orange-500 to-orange-400 w-14 h-14 rounded-full flex items-center justify-center mb-4">
+                            <i class="fas fa-cog text-white text-xl"></i>
+                        </div>
+                        <h4 class="text-xl font-semibold mb-3">Custom Masking Rules</h4>
+                        <p class="leading-relaxed">Allows users to define custom keywords or regex patterns for masking specific data like Driver License or Passport Numbers.</p>
+                    </div>
+                    
+                    <div class="glass-effect rounded-xl p-6 card-hover">
+                        <div class="bg-gradient-to-r from-blue-600 to-blue-500 w-14 h-14 rounded-full flex items-center justify-center mb-4">
+                            <i class="fas fa-upload text-white text-xl"></i>
+                        </div>
+                        <h4 class="text-xl font-semibold mb-3">Batch Processing Mode</h4>
+                        <p class="leading-relaxed">Enables users to upload and process multiple ID images simultaneously for efficient workflows.</p>
+                    </div>
+                    
+                    <div class="glass-effect rounded-xl p-6 card-hover">
+                        <div class="bg-gradient-to-r from-purple-600 to-purple-500 w-14 h-14 rounded-full flex items-center justify-center mb-4">
+                            <i class="fas fa-download text-white text-xl"></i>
+                        </div>
+                        <h4 class="text-xl font-semibold mb-3">Download in Multiple Formats</h4>
+                        <p class="leading-relaxed">Save masked outputs as PDF, PNG, or JPEG, with optional before/after comparison views.</p>
+                    </div>
+                    
+                    <div class="glass-effect rounded-xl p-6 card-hover">
+                        <div class="bg-gradient-to-r from-green-600 to-green-500 w-14 h-14 rounded-full flex items-center justify-center mb-4">
+                            <i class="fas fa-file-alt text-white text-xl"></i>
+                        </div>
+                        <h4 class="text-xl font-semibold mb-3">Audit Report Generation</h4>
+                        <p class="leading-relaxed">Generates detailed privacy audit reports listing detected and masked items for transparency.</p>
+                    </div>
+                    
+                    <div class="glass-effect rounded-xl p-6 card-hover">
+                        <div class="bg-gradient-to-r from-pink-600 to-pink-500 w-14 h-14 rounded-full flex items-center justify-center mb-4">
+                            <i class="fas fa-desktop text-white text-xl"></i>
+                        </div>
+                        <h4 class="text-xl font-semibold mb-3">Offline Desktop/Web App Mode</h4>
+                        <p class="leading-relaxed">Supports fully offline operation using Electron for desktop or Progressive Web App features.</p>
+                    </div>
+                    
+                    <div class="glass-effect rounded-xl p-6 card-hover">
+                        <div class="bg-gradient-to-r from-yellow-600 to-yellow-500 w-14 h-14 rounded-full flex items-center justify-center mb-4">
+                            <i class="fas fa-check-circle text-white text-xl"></i>
+                        </div>
+                        <h4 class="text-xl font-semibold mb-3">Masking Confidence Indicator</h4>
+                        <p class="leading-relaxed">Displays confidence scores for each detection, ensuring users understand AI certainty levels.</p>
+                    </div>
+                    
+                    <div class="glass-effect rounded-xl p-6 card-hover">
+                        <div class="bg-gradient-to-r from-red-600 to-red-500 w-14 h-14 rounded-full flex items-center justify-center mb-4">
+                            <i class="fas fa-universal-access text-white text-xl"></i>
+                        </div>
+                        <h4 class="text-xl font-semibold mb-3">Accessibility & Compliance</h4>
+                        <p class="leading-relaxed">Designed for WCAG accessibility standards and compliant with GDPR and HIPAA regulations.</p>
+                    </div>
+                </div>
+                
+                <div class="text-center">
+                    <button onclick="window.location.href='Read Our Technical Whitepaper.html'" class="btn-3d bg-gradient-to-r from-blue-500 to-purple-500 text-white px-8 py-3 rounded-lg font-medium text-lg">
+                        <i class="fas fa-book mr-2"></i>Read Our Technical Whitepaper
+                    </button>
+                </div>
+            </section>
+
+            <!-- Team Section -->
+            <section class="mb-16">
+                <h3 class="text-3xl font-bold mb-12 text-center">
+                    Meet the <span class="text-accent">Team</span>
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <!-- Team Member 1 -->
+                    <div class="team-card glass-effect rounded-xl overflow-hidden">
+                        <div class="relative">
+                            <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80" 
+                                 alt="Dr. Sarah Chen" 
+                                 class="w-full h-64 object-cover">
+                            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4">
+                                <h4 class="text-xl font-bold">Dr. Sarah Chen</h4>
+                                <p class="text-sm text-blue-300">Founder & CEO</p>
+                            </div>
+                        </div>
+                        <div class="p-6">
+                            <p class="mb-4">Former cybersecurity researcher with 15+ years experience in data protection and privacy technologies.</p>
+                            <div class="flex space-x-3">
+                                <a href="#" class="text-blue-400 hover:text-blue-300"><i class="fab fa-linkedin"></i></a>
+                                <a href="#" class="text-blue-400 hover:text-blue-300"><i class="fab fa-twitter"></i></a>
+                                <a href="#" class="text-blue-400 hover:text-blue-300"><i class="fas fa-envelope"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Team Member 2 -->
+                    <div class="team-card glass-effect rounded-xl overflow-hidden">
+                        <div class="relative">
+                            <img src="https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80" 
+                                 alt="Michael Rodriguez" 
+                                 class="w-full h-64 object-cover">
+                            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4">
+                                <h4 class="text-xl font-bold">Michael Rodriguez</h4>
+                                <p class="text-sm text-purple-300">CTO</p>
+                            </div>
+                        </div>
+                        <div class="p-6">
+                            <p class="mb-4">AI and computer vision expert specializing in document analysis and pattern recognition.</p>
+                            <div class="flex space-x-3">
+                                <a href="#" class="text-blue-400 hover:text-blue-300"><i class="fab fa-linkedin"></i></a>
+                                <a href="#" class="text-blue-400 hover:text-blue-300"><i class="fab fa-github"></i></a>
+                                <a href="#" class="text-blue-400 hover:text-blue-300"><i class="fas fa-envelope"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Team Member 3 -->
+                    <div class="team-card glass-effect rounded-xl overflow-hidden">
+                        <div class="relative">
+                            <img src="https://images.unsplash.com/photo-1580489944761-15a19d654956?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=761&q=80" 
+                                 alt="Priya Patel" 
+                                 class="w-full h-64 object-cover">
+                            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4">
+                                <h4 class="text-xl font-bold">Priya Patel</h4>
+                                <p class="text-sm text-green-300">Lead Developer</p>
+                            </div>
+                        </div>
+                        <div class="p-6">
+                            <p class="mb-4">Full-stack developer focused on creating secure, privacy-first web applications.</p>
+                            <div class="flex space-x-3">
+                                <a href="#" class="text-blue-400 hover:text-blue-300"><i class="fab fa-linkedin"></i></a>
+                                <a href="#" class="text-blue-400 hover:text-blue-300"><i class="fab fa-twitter"></i></a>
+                                <a href="#" class="text-blue-400 hover:text-blue-300"><i class="fab fa-github"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="glass-effect mt-16 border-t border-white/10">
+            <div class="container mx-auto px-4 py-8">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <div class="mb-6 md:mb-0">
+                        <div class="flex items-center mb-2">
+                            <i class="fas fa-shield-halved text-2xl mr-2 text-blue-400"></i>
+                            <span class="text-xl font-bold">SecureID Pro</span>
+                        </div>
+                        <p class="text-gray-400">Advanced privacy protection for the digital age.</p>
+                    </div>
+                    <div class="flex space-x-6">
+                        <a href="#" class="text-gray-400 hover:text-white transition">
+                            <i class="fab fa-github text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition">
+                            <i class="fab fa-linkedin text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition">
+                            <i class="fab fa-twitter text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition">
+                            <i class="fab fa-facebook text-xl"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="border-t border-gray-700 mt-6 pt-6 text-center text-gray-400 text-sm">
+                    <p>&copy; 2024 SecureID Pro. All rights reserved. | <a href="#" class="hover:text-white">Privacy Policy</a> | <a href="#" class="hover:text-white">Terms of Service</a></p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Three.js Background Animation
+        function initThreeJS() {
+            const container = document.getElementById('threejs-background');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            // Scene
+            const scene = new THREE.Scene();
+            
+            // Camera
+            const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+            camera.position.z = 30;
+            
+            // Renderer
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(width, height);
+            container.appendChild(renderer.domElement);
+            
+            // Particles
+            const particlesGeometry = new THREE.BufferGeometry();
+            const particleCount = 1000;
+            
+            const posArray = new Float32Array(particleCount * 3);
+            const colorArray = new Float32Array(particleCount * 3);
+            
+            for(let i = 0; i < particleCount * 3; i++) {
+                posArray[i] = (Math.random() - 0.5) * 100;
+                colorArray[i] = Math.random();
+            }
+            
+            particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+            particlesGeometry.setAttribute('color', new THREE.BufferAttribute(colorArray, 3));
+            
+            const particlesMaterial = new THREE.PointsMaterial({
+                size: 0.4,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.8,
+                blending: THREE.AdditiveBlending
+            });
+            
+            const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+            scene.add(particlesMesh);
+            
+            // Animated shapes
+            const geometry = new THREE.TorusKnotGeometry(10, 3, 100, 16);
+            const material = new THREE.MeshBasicMaterial({ 
+                color: 0x1E90FF,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.3
+            });
+            const torusKnot = new THREE.Mesh(geometry, material);
+            scene.add(torusKnot);
+            
+            // Animation loop
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                particlesMesh.rotation.x += 0.0005;
+                particlesMesh.rotation.y += 0.0005;
+                
+                torusKnot.rotation.x += 0.005;
+                torusKnot.rotation.y += 0.005;
+                
+                renderer.render(scene, camera);
+            }
+            
+            // Handle resize
+            window.addEventListener('resize', () => {
+                const width = container.clientWidth;
+                const height = container.clientHeight;
+                
+                camera.aspect = width / height;
+                camera.updateProjectionMatrix();
+                renderer.setSize(width, height);
+            });
+            
+            animate();
+        }
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Three.js background
+            initThreeJS();
+            
+            // Add some initial animations
+            const elements = document.querySelectorAll('.glass-effect');
+            elements.forEach((el, index) => {
+                setTimeout(() => {
+                    el.style.opacity = '0';
+                    el.style.transform = 'translateY(20px)';
+                    el.style.transition = 'all 0.6s ease';
+                    setTimeout(() => {
+                        el.style.opacity = '1';
+                        el.style.transform = 'translateY(0)';
+                    }, 100);
+                }, index * 100);
+            });
+        });
+    </script>
+</body>
+</html>

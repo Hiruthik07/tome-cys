@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureID Pro - Contact Us</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --electric-blue: #1E90FF;
+            --gold: #FFD700;
+            --gold-secondary: #FFC300;
+            --teal-blue: #007B8A;
+            --cyan: #00BCD4;
+            --deep-purple: #4B0082;
+            --navy-blue: #1F2F46;
+            --dark-charcoal: #1A1A1A;
+            --jet-black: #121212;
+            --platinum-white: #F8F8FF;
+
+            --text-main: var(--platinum-white);
+            --text-accent: var(--gold);
+            --background-main: var(--navy-blue);
+            --background-dark: var(--dark-charcoal);
+            --button-bg: var(--electric-blue);
+            --button-hover: var(--gold);
+            --accent: var(--teal-blue);
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(-100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .floating { animation: float 3s ease-in-out infinite; }
+        .pulsing { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        .slide-in { animation: slideIn 0.5s ease-out; }
+        .fade-in-up { animation: fadeInUp 0.6s ease-out forwards; }
+        
+        .btn-3d {
+            position: relative;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 0 0 rgba(0,0,0,0.2);
+        }
+        
+        .btn-3d:active {
+            transform: translateY(5px);
+            box-shadow: 0 2px 0 0 rgba(0,0,0,0.2);
+        }
+        
+        .glass-effect {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .neon-border {
+            box-shadow: 0 0 5px rgba(30, 144, 255, 0.5), 
+                       0 0 20px rgba(30, 144, 255, 0.3), 
+                       0 0 35px rgba(30, 144, 255, 0.1);
+        }
+
+        .sidebar {
+            background: var(--dark-charcoal);
+            border-right: 1px solid var(--teal-blue);
+        }
+
+        .badge {
+            background: var(--gold);
+            color: var(--jet-black);
+        }
+
+        body {
+            background: var(--background-dark);
+            color: var(--text-main);
+        }
+
+        .bg-gradient-to-br {
+            background-image: linear-gradient(to bottom right, var(--background-dark), var(--background-main));
+        }
+
+        .text-accent {
+            color: var(--text-accent);
+        }
+
+        .bg-accent {
+            background-color: var(--accent);
+        }
+
+        .btn-primary {
+            background-color: var(--button-bg);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--button-hover);
+        }
+
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(30, 144, 255, 0.2);
+        }
+
+        #threejs-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.2;
+        }
+
+        .contact-card {
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, rgba(30, 144, 255, 0.2) 0%, rgba(75, 0, 130, 0.2) 100%);
+            border: 1px solid rgba(30, 144, 255, 0.3);
+        }
+
+        .contact-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(30, 144, 255, 0.3);
+        }
+
+        .form-input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            border-color: var(--electric-blue);
+            box-shadow: 0 0 0 3px rgba(30, 144, 255, 0.3);
+        }
+
+        .map-container {
+            height: 100%;
+            min-height: 300px;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Highlight active section */
+        .active-section {
+            border-left: 4px solid var(--electric-blue);
+            background: rgba(30, 144, 255, 0.1);
+        }
+
+        /* Simple contact button style */
+        .contact-btn {
+            background-color: rgba(255, 255, 255, 0.1);
+            transition: background-color 0.3s ease;
+        }
+
+        .contact-btn:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .contact-btn.active {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br">
+    <!-- Three.js Background -->
+    <div id="threejs-background"></div>
+
+    <!-- Main App -->
+    <div id="app" class="relative z-10">
+        <!-- Header -->
+        <header class="glass-effect shadow-2xl border-b border-white/10">
+            <div class="container mx-auto px-4 py-6">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <div class="flex items-center mb-4 md:mb-0">
+                        <i class="fas fa-shield-halved text-4xl mr-3 floating text-accent"></i>
+                        <div>
+                            <h1 class="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                                SecureID Pro
+                            </h1>
+                            <p class="text-sm" style="color: var(--text-main);">Contact Our Security Team</p>
+                        </div>
+                    </div>
+                    <nav class="flex space-x-6">
+                        <a href="secureID.html" class="px-4 py-2 rounded-lg glass-effect hover:bg-white/20 transition flex items-center">
+                            <i class="fas fa-home mr-2"></i>Home
+                        </a>
+                        <a href="Dashboard.html" class="px-4 py-2 rounded-lg glass-effect hover:bg-white/20 transition flex items-center">
+                            <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+                        </a>
+                        <a href="#" class="px-4 py-2 rounded-lg glass-effect contact-btn active transition flex items-center">
+                            <i class="fas fa-envelope mr-2"></i>Contact
+                        </a>
+                    </nav>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="container mx-auto px-4 py-8 flex">
+            <!-- Sidebar -->
+            <div class="sidebar w-64 hidden md:block mr-8 rounded-lg p-4 glass-effect">
+                <h3 class="text-lg font-bold mb-4 text-accent">Quick Links</h3>
+                <ul class="space-y-2">
+                    <li><a href="#contact-cards" class="quick-link block px-3 py-2 rounded hover:bg-white/10 transition">
+                        <i class="fas fa-headset mr-2"></i>Contact Options
+                    </a></li>
+                    <li><a href="#contact-form" class="quick-link block px-3 py-2 rounded hover:bg-white/10 transition">
+                        <i class="fas fa-paper-plane mr-2"></i>Send Message
+                    </a></li>
+                    <li><a href="#location" class="quick-link block px-3 py-2 rounded hover:bg-white/10 transition">
+                        <i class="fas fa-map-marker-alt mr-2"></i>Our Location
+                    </a></li>
+                    <li><a href="#faq" class="quick-link block px-3 py-2 rounded hover:bg-white/10 transition">
+                        <i class="fas fa-question-circle mr-2"></i>FAQs
+                    </a></li>
+                </ul>
+                
+                <div class="mt-8">
+                    <h3 class="text-lg font-bold mb-4 text-accent">Emergency Contact</h3>
+                    <div class="glass-effect rounded-lg p-4">
+                        <p class="text-sm mb-2">For urgent security issues:</p>
+                        <button class="btn-primary w-full py-2 rounded-lg mb-2 btn-3d">
+                            <i class="fas fa-phone mr-2"></i>+1 (555) SEC-URIT
+                        </button>
+                        <button class="bg-red-500 w-full py-2 rounded-lg btn-3d">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>Report Incident
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex-1">
+                <!-- Hero Section -->
+                <div class="text-center mb-12 fade-in-up">
+                    <h2 class="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+                        Get In Touch
+                    </h2>
+                    <p class="text-xl max-w-3xl mx-auto leading-relaxed" style="color: var(--text-main);">
+                        Our security team is ready to assist you with any questions about SecureID Pro, privacy concerns, or technical support.
+                    </p>
+                </div>
+
+                <!-- Contact Cards -->
+                <div id="contact-cards" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <!-- Support Card -->
+                    <div class="contact-card rounded-xl p-6 fade-in-up" style="animation-delay: 0.1s">
+                        <div class="flex items-center justify-center w-14 h-14 rounded-full bg-blue-500/20 mb-4">
+                            <i class="fas fa-headset text-2xl text-blue-400"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-3">Technical Support</h3>
+                        <p class="text-gray-300 mb-4">Get help with technical issues, troubleshooting, and product questions.</p>
+                        <div class="space-y-2">
+                            <div class="flex items-center">
+                                <i class="fas fa-envelope text-blue-400 mr-3"></i>
+                                <span>support@secureid-pro.com</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-phone text-blue-400 mr-3"></i>
+                                <span>+1 (555) 123-4567</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-clock text-blue-400 mr-3"></i>
+                                <span>24/7 Availability</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sales Card -->
+                    <div class="contact-card rounded-xl p-6 fade-in-up" style="animation-delay: 0.2s">
+                        <div class="flex items-center justify-center w-14 h-14 rounded-full bg-purple-500/20 mb-4">
+                            <i class="fas fa-chart-line text-2xl text-purple-400"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-3">Sales & Business</h3>
+                        <p class="text-gray-300 mb-4">Inquiries about enterprise solutions, pricing, and partnerships.</p>
+                        <div class="space-y-2">
+                            <div class="flex items-center">
+                                <i class="fas fa-envelope text-purple-400 mr-3"></i>
+                                <span>sales@secureid-pro.com</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-phone text-purple-400 mr-3"></i>
+                                <span>+1 (555) 987-6543</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-clock text-purple-400 mr-3"></i>
+                                <span>Mon-Fri, 9AM-5PM EST</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Security Card -->
+                    <div class="contact-card rounded-xl p-6 fade-in-up" style="animation-delay: 0.3s">
+                        <div class="flex items-center justify-center w-14 h-14 rounded-full bg-green-500/20 mb-4">
+                            <i class="fas fa-shield-alt text-2xl text-green-400"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-3">Security Team</h3>
+                        <p class="text-gray-300 mb-4">Report vulnerabilities, security concerns, or privacy issues.</p>
+                        <div class="space-y-2">
+                            <div class="flex items-center">
+                                <i class="fas fa-envelope text-green-400 mr-3"></i>
+                                <span>security@secureid-pro.com</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-phone text-green-400 mr-3"></i>
+                                <span>+1 (555) SEC-URIT</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-lock text-green-400 mr-3"></i>
+                                <span>Encrypted Communication</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contact Form Section -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                    <!-- Contact Form -->
+                    <div id="contact-form" class="glass-effect rounded-2xl p-8 neon-border fade-in-up">
+                        <h3 class="text-2xl font-bold mb-6 flex items-center">
+                            <i class="fas fa-paper-plane text-blue-400 mr-3"></i>
+                            Send Us a Message
+                        </h3>
+                        
+                        <form id="contactForm" class="space-y-6">
+                            <div>
+                                <label for="name" class="block text-sm font-medium mb-2">Your Name</label>
+                                <input type="text" id="name" name="name" class="form-input w-full px-4 py-3 rounded-lg" placeholder="John Doe" required>
+                            </div>
+                            
+                            <div>
+                                <label for="email" class="block text-sm font-medium mb-2">Email Address</label>
+                                <input type="email" id="email" name="email" class="form-input w-full px-4 py-3 rounded-lg" placeholder="your@email.com" required>
+                            </div>
+                            
+                            <div>
+                                <label for="subject" class="block text-sm font-medium mb-2">Subject</label>
+                                <select id="subject" name="subject" class="form-input w-full px-4 py-3 rounded-lg" required>
+                                    <option value="" disabled selected>Select a topic</option>
+                                    <option value="support">Technical Support</option>
+                                    <option value="sales">Sales Inquiry</option>
+                                    <option value="security">Security Concern</option>
+                                    <option value="feedback">Product Feedback</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label for="message" class="block text-sm font-medium mb-2">Your Message</label>
+                                <textarea id="message" name="message" rows="5" class="form-input w-full px-4 py-3 rounded-lg" placeholder="How can we help you?" required></textarea>
+                            </div>
+                            
+                            <div class="flex items-center">
+                                <input type="checkbox" id="consent" name="consent" class="w-4 h-4 text-blue-600 rounded" required>
+                                <label for="consent" class="ml-2 text-sm">I agree to the <a href="#" class="text-blue-400 hover:underline">privacy policy</a> and terms</label>
+                            </div>
+                            
+                            <button type="submit" class="btn-3d btn-primary w-full py-3 rounded-lg font-medium text-lg">
+                                <i class="fas fa-paper-plane mr-2"></i>Send Message
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <!-- Map and Address -->
+                    <div id="location" class="glass-effect rounded-2xl p-8 neon-border fade-in-up" style="animation-delay: 0.2s">
+                        <h3 class="text-2xl font-bold mb-6 flex items-center">
+                            <i class="fas fa-map-marker-alt text-red-400 mr-3"></i>
+                            Our Location
+                        </h3>
+                        
+                        <div class="map-container mb-6">
+                            <!-- Map placeholder - in a real implementation you'd use Google Maps or similar -->
+                            <div class="w-full h-full bg-gradient-to-br from-blue-900 to-purple-900 flex items-center justify-center">
+                                <div class="text-center p-6">
+                                    <i class="fas fa-map-marked-alt text-5xl text-blue-400 mb-4"></i>
+                                    <p class="text-lg font-semibold">SecureID Pro Headquarters</p>
+                                    <p class="text-sm text-gray-300">123 Security Lane, Suite 100</p>
+                                    <p class="text-sm text-gray-300">San Francisco, CA 94107</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-building text-blue-400 text-xl mt-1"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <h4 class="font-semibold">Corporate Office</h4>
+                                    <p class="text-sm text-gray-300">123 Security Lane, Suite 100<br>San Francisco, CA 94107</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-clock text-purple-400 text-xl mt-1"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <h4 class="font-semibold">Business Hours</h4>
+                                    <p class="text-sm text-gray-300">Monday - Friday: 9:00 AM - 6:00 PM EST<br>Weekends: Closed</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-globe-americas text-green-400 text-xl mt-1"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <h4 class="font-semibold">Global Presence</h4>
+                                    <p class="text-sm text-gray-300">We serve clients worldwide with regional offices in London, Singapore, and Sydney.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FAQ Section -->
+                <div id="faq" class="glass-effect rounded-2xl p-8 neon-border mb-8 fade-in-up" style="animation-delay: 0.3s">
+                    <h3 class="text-2xl font-bold mb-6 flex items-center">
+                        <i class="fas fa-question-circle text-yellow-400 mr-3"></i>
+                        Frequently Asked Questions
+                    </h3>
+                    
+                    <div class="space-y-4">
+                        <div class="border-b border-gray-700 pb-4">
+                            <button class="faq-toggle flex items-center justify-between w-full text-left">
+                                <span class="font-semibold">How secure is my data when I contact you?</span>
+                                <i class="fas fa-chevron-down transition-transform duration-300"></i>
+                            </button>
+                            <div class="faq-content mt-2 hidden">
+                                <p class="text-sm text-gray-300">All communications with our team are encrypted using industry-standard TLS 1.2+ protocols. For sensitive security issues, we recommend using our encrypted email channel (security@secureid-pro.com) which uses PGP encryption.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="border-b border-gray-700 pb-4">
+                            <button class="faq-toggle flex items-center justify-between w-full text-left">
+                                <span class="font-semibold">What's your average response time?</span>
+                                <i class="fas fa-chevron-down transition-transform duration-300"></i>
+                            </button>
+                            <div class="faq-content mt-2 hidden">
+                                <p class="text-sm text-gray-300">Our response times vary by department:<br>
+                                - Technical Support: Within 2 hours for critical issues, 24 hours for standard inquiries<br>
+                                - Sales Team: Within 1 business day<br>
+                                - Security Team: Immediate acknowledgment for urgent issues, full response within 72 hours</p>
+                            </div>
+                        </div>
+                        
+                        <div class="border-b border-gray-700 pb-4">
+                            <button class="faq-toggle flex items-center justify-between w-full text-left">
+                                <span class="font-semibold">Do you offer enterprise support plans?</span>
+                                <i class="fas fa-chevron-down transition-transform duration-300"></i>
+                            </button>
+                            <div class="faq-content mt-2 hidden">
+                                <p class="text-sm text-gray-300">Yes, we offer several enterprise support tiers with guaranteed response times, dedicated account managers, and custom SLAs. Contact our sales team for more information about our Platinum, Gold, and Silver support plans.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="border-b border-gray-700 pb-4">
+                            <button class="faq-toggle flex items-center justify-between w-full text-left">
+                                <span class="font-semibold">How can I report a security vulnerability?</span>
+                                <i class="fas fa-chevron-down transition-transform duration-300"></i>
+                            </button>
+                            <div class="faq-content mt-2 hidden">
+                                <p class="text-sm text-gray-300">We take security vulnerabilities very seriously. Please email full details to security@secureid-pro.com using our PGP key (available on our security page). For critical vulnerabilities, you may call our security hotline at +1 (555) SEC-URIT.</p>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <button class="faq-toggle flex items-center justify-between w-full text-left">
+                                <span class="font-semibold">Where can I find documentation?</span>
+                                <i class="fas fa-chevron-down transition-transform duration-300"></i>
+                            </button>
+                            <div class="faq-content mt-2 hidden">
+                                <p class="text-sm text-gray-300">Our full documentation is available at docs.secureid-pro.com, including API references, implementation guides, and troubleshooting articles. You can also access context-sensitive help within the application by clicking the help icon in the top right corner.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="glass-effect mt-16 border-t border-white/10">
+            <div class="container mx-auto px-4 py-8">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <div class="mb-6 md:mb-0">
+                        <div class="flex items-center mb-2">
+                            <i class="fas fa-shield-halved text-2xl mr-2 text-blue-400"></i>
+                            <span class="text-xl font-bold">SecureID Pro</span>
+                        </div>
+                        <p class="text-gray-400">Advanced privacy protection for the digital age.</p>
+                    </div>
+                    <div class="flex space-x-6">
+                        <a href="#" class="text-gray-400 hover:text-white transition">
+                            <i class="fab fa-github text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition">
+                            <i class="fab fa-linkedin text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition">
+                            <i class="fab fa-twitter text-xl"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="border-t border-gray-700 mt-6 pt-6 text-center text-gray-400 text-sm">
+                    <p>&copy; 2024 SecureID Pro. All rights reserved. | Contact Support</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Three.js Background Animation
+        function initThreeJS() {
+            const container = document.getElementById('threejs-background');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            // Scene
+            const scene = new THREE.Scene();
+            
+            // Camera
+            const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+            camera.position.z = 30;
+            
+            // Renderer
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(width, height);
+            container.appendChild(renderer.domElement);
+            
+            // Particles
+            const particlesGeometry = new THREE.BufferGeometry();
+            const particleCount = 1000;
+            
+            const posArray = new Float32Array(particleCount * 3);
+            const colorArray = new Float32Array(particleCount * 3);
+            
+            for(let i = 0; i < particleCount * 3; i++) {
+                posArray[i] = (Math.random() - 0.5) * 100;
+                colorArray[i] = Math.random();
+            }
+            
+            particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+            particlesGeometry.setAttribute('color', new THREE.BufferAttribute(colorArray, 3));
+            
+            const particlesMaterial = new THREE.PointsMaterial({
+                size: 0.4,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.8,
+                blending: THREE.AdditiveBlending
+            });
+            
+            const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+            scene.add(particlesMesh);
+            
+            // Animated shapes
+            const geometry = new THREE.TorusKnotGeometry(10, 3, 100, 16);
+            const material = new THREE.MeshBasicMaterial({ 
+                color: 0x1E90FF,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.3
+            });
+            const torusKnot = new THREE.Mesh(geometry, material);
+            scene.add(torusKnot);
+            
+            // Animation loop
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                particlesMesh.rotation.x += 0.0005;
+                particlesMesh.rotation.y += 0.0005;
+                
+                torusKnot.rotation.x += 0.005;
+                torusKnot.rotation.y += 0.005;
+                
+                renderer.render(scene, camera);
+            }
+            
+            // Handle resize
+            window.addEventListener('resize', () => {
+                const width = container.clientWidth;
+                const height = container.clientHeight;
+                
+                camera.aspect = width / height;
+                camera.updateProjectionMatrix();
+                renderer.setSize(width, height);
+            });
+            
+            animate();
+        }
+
+        // Handle FAQ toggles
+        function setupFaqToggles() {
+            document.querySelectorAll('.faq-toggle').forEach(toggle => {
+                toggle.addEventListener('click', function() {
+                    const content = this.nextElementSibling;
+                    const icon = this.querySelector('i');
+                    
+                    content.classList.toggle('hidden');
+                    icon.classList.toggle('rotate-180');
+                });
+            });
+        }
+
+        // Handle form submission
+        function setupContactForm() {
+            const form = document.getElementById('contactForm');
+            
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Get form values
+                const name = document.getElementById('name').value;
+                const email = document.getElementById('email').value;
+                const subject = document.getElementById('subject').value;
+                const message = document.getElementById('message').value;
+                
+                // In a real app, you would send this data to your server
+                console.log('Form submitted:', { name, email, subject, message });
+                
+                // Show success message
+                showNotification('Your message has been sent! We\'ll get back to you soon.', 'success');
+                
+                // Reset form
+                form.reset();
+            });
+        }
+
+        // Show notification
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 transform translate-x-full glass-effect`;
+            
+            const bgColor = type === 'success' ? 'border-green-500' : 
+                           type === 'error' ? 'border-red-500' : 
+                           type === 'warning' ? 'border-yellow-500' : 'border-blue-500';
+            
+            notification.classList.add('border', bgColor);
+            
+            const icon = type === 'success' ? 'check-circle' : 
+                        type === 'error' ? 'exclamation-triangle' : 
+                        type === 'warning' ? 'exclamation-triangle' : 'info-circle';
+            
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-${icon} mr-2 text-${type === 'error' ? 'red' : type === 'success' ? 'green' : type === 'warning' ? 'yellow' : 'blue'}-400"></i>
+                    <span>${message}</span>
+                    <button class="ml-4 text-gray-400 hover:text-white" onclick="this.parentElement.parentElement.remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => notification.classList.remove('translate-x-full'), 100);
+            setTimeout(() => {
+                notification.classList.add('translate-x-full');
+                setTimeout(() => notification.remove(), 300);
+            }, 5000);
+        }
+
+        // Initialize animations
+        function initAnimations() {
+            const elements = document.querySelectorAll('.fade-in-up');
+            elements.forEach((el, index) => {
+                setTimeout(() => {
+                    el.style.opacity = '0';
+                    el.style.transform = 'translateY(30px)';
+                    el.style.transition = 'all 0.6s ease';
+                    setTimeout(() => {
+                        el.style.opacity = '1';
+                        el.style.transform = 'translateY(0)';
+                    }, 100);
+                }, index * 100);
+            });
+        }
+
+        // Handle quick link navigation
+        function setupQuickLinks() {
+            // Add click handlers for quick links
+            document.querySelectorAll('.quick-link').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href');
+                    const targetElement = document.querySelector(targetId);
+                    
+                    if (targetElement) {
+                        // Remove active class from all links
+                        document.querySelectorAll('.quick-link').forEach(l => {
+                            l.parentElement.classList.remove('active-section');
+                        });
+                        
+                        // Add active class to clicked link
+                        this.parentElement.classList.add('active-section');
+                        
+                        // Smooth scroll to target
+                        targetElement.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+            
+            // Highlight active section based on scroll position
+            const sections = document.querySelectorAll('[id^="contact-"], #location, #faq');
+            const navLinks = document.querySelectorAll('.quick-link');
+            
+            window.addEventListener('scroll', function() {
+                let current = '';
+                
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    const sectionHeight = section.clientHeight;
+                    
+                    if (pageYOffset >= (sectionTop - 100)) {
+                        current = section.getAttribute('id');
+                    }
+                });
+                
+                navLinks.forEach(link => {
+                    link.parentElement.classList.remove('active-section');
+                    if (link.getAttribute('href') === `#${current}`) {
+                        link.parentElement.classList.add('active-section');
+                    }
+                });
+            });
+        }
+
+        // Highlight current page in navigation
+        function highlightCurrentPage() {
+            const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+            document.querySelectorAll('nav a').forEach(link => {
+                if (link.getAttribute('href') === currentPage) {
+                    link.classList.add('active');
+                } else {
+                    link.classList.remove('active');
+                }
+            });
+        }
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Three.js background
+            initThreeJS();
+            
+            // Setup FAQ toggles
+            setupFaqToggles();
+            
+            // Setup contact form
+            setupContactForm();
+            
+            // Setup quick links navigation
+            setupQuickLinks();
+            
+            // Highlight current page
+            highlightCurrentPage();
+            
+            // Initialize animations
+            initAnimations();
+            
+            // Show welcome notification
+            setTimeout(() => {
+                showNotification('Welcome to SecureID Pro Contact Center! How can we help you?', 'info');
+            }, 1500);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureID Pro - Explore Features</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --electric-blue: #1E90FF;
+            --gold: #FFD700;
+            --gold-secondary: #FFC300;
+            --teal-blue: #007B8A;
+            --cyan: #00BCD4;
+            --deep-purple: #4B0082;
+            --navy-blue: #1F2F46;
+            --dark-charcoal: #1A1A1A;
+            --jet-black: #121212;
+            --platinum-white: #F8F8FF;
+
+            --text-main: var(--platinum-white);
+            --text-accent: var(--gold);
+            --background-main: var(--navy-blue);
+            --background-dark: var(--dark-charcoal);
+            --button-bg: var(--electric-blue);
+            --button-hover: var(--gold);
+            --accent: var(--teal-blue);
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(-100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .floating { animation: float 3s ease-in-out infinite; }
+        .pulsing { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        .slide-in { animation: slideIn 0.5s ease-out; }
+        .fade-in-up { animation: fadeInUp 0.6s ease-out forwards; }
+        
+        .btn-3d {
+            position: relative;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 0 0 rgba(0,0,0,0.2);
+        }
+        
+        .btn-3d:active {
+            transform: translateY(5px);
+            box-shadow: 0 2px 0 0 rgba(0,0,0,0.2);
+        }
+        
+        .glass-effect {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .neon-border {
+            box-shadow: 0 0 5px rgba(30, 144, 255, 0.5), 
+                       0 0 20px rgba(30, 144, 255, 0.3), 
+                       0 0 35px rgba(30, 144, 255, 0.1);
+        }
+
+        .sidebar {
+            background: var(--dark-charcoal);
+            border-right: 1px solid var(--teal-blue);
+        }
+
+        .badge {
+            background: var(--gold);
+            color: var(--jet-black);
+        }
+
+        body {
+            background: var(--background-dark);
+            color: var(--text-main);
+        }
+
+        .bg-gradient-to-br {
+            background-image: linear-gradient(to bottom right, var(--background-dark), var(--background-main));
+        }
+
+        .text-accent {
+            color: var(--text-accent);
+        }
+
+        .bg-accent {
+            background-color: var(--accent);
+        }
+
+        .btn-primary {
+            background-color: var(--button-bg);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--button-hover);
+        }
+
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(30, 144, 255, 0.2);
+        }
+
+        #threejs-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.2;
+        }
+
+        .feature-card {
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--electric-blue);
+            box-shadow: 0 10px 25px rgba(30, 144, 255, 0.2);
+        }
+
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 16px;
+            margin-bottom: 20px;
+        }
+
+        .video-container {
+            position: relative;
+            padding-bottom: 56.25%; /* 16:9 */
+            height: 0;
+            overflow: hidden;
+            border-radius: 12px;
+        }
+
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .comparison-slider {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            overflow: hidden;
+            border-radius: 12px;
+        }
+
+        .comparison-slider img {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .comparison-slider .before {
+            width: 50%;
+            overflow: hidden;
+        }
+
+        .comparison-slider .slider-handle {
+            position: absolute;
+            width: 4px;
+            height: 100%;
+            background: white;
+            left: 50%;
+            transform: translateX(-50%);
+            cursor: ew-resize;
+        }
+
+        .comparison-slider .slider-handle::after {
+            content: '';
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: white;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .timeline {
+            position: relative;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .timeline::after {
+            content: '';
+            position: absolute;
+            width: 6px;
+            background: var(--electric-blue);
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            margin-left: -3px;
+            border-radius: 3px;
+        }
+
+        .timeline-item {
+            padding: 10px 40px;
+            position: relative;
+            width: 50%;
+            box-sizing: border-box;
+        }
+
+        .timeline-item::after {
+            content: '';
+            position: absolute;
+            width: 25px;
+            height: 25px;
+            right: -12px;
+            background-color: var(--gold);
+            border: 4px solid var(--electric-blue);
+            top: 15px;
+            border-radius: 50%;
+            z-index: 1;
+        }
+
+        .left {
+            left: 0;
+        }
+
+        .right {
+            left: 50%;
+        }
+
+        .left::before {
+            content: " ";
+            height: 0;
+            position: absolute;
+            top: 22px;
+            width: 0;
+            z-index: 1;
+            right: 30px;
+            border: medium solid var(--electric-blue);
+            border-width: 10px 0 10px 10px;
+            border-color: transparent transparent transparent var(--electric-blue);
+        }
+
+        .right::before {
+            content: " ";
+            height: 0;
+            position: absolute;
+            top: 22px;
+            width: 0;
+            z-index: 1;
+            left: 30px;
+            border: medium solid var(--electric-blue);
+            border-width: 10px 10px 10px 0;
+            border-color: transparent var(--electric-blue) transparent transparent;
+        }
+
+        .right::after {
+            left: -12px;
+        }
+
+        @media screen and (max-width: 768px) {
+            .timeline::after {
+                left: 31px;
+            }
+            
+            .timeline-item {
+                width: 100%;
+                padding-left: 70px;
+                padding-right: 25px;
+            }
+            
+            .timeline-item::before {
+                left: 60px;
+                border: medium solid var(--electric-blue);
+                border-width: 10px 10px 10px 0;
+                border-color: transparent var(--electric-blue) transparent transparent;
+            }
+            
+            .left::after, .right::after {
+                left: 18px;
+            }
+            
+            .right {
+                left: 0%;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br">
+    <!-- Three.js Background -->
+    <div id="threejs-background"></div>
+
+    <!-- Main App -->
+    <div id="app" class="relative z-10">
+        <!-- Header -->
+        <header class="glass-effect shadow-2xl border-b border-white/10">
+            <div class="container mx-auto px-4 py-6">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <div class="flex items-center mb-4 md:mb-0">
+                        <i class="fas fa-shield-halved text-4xl mr-3 floating text-accent"></i>
+                        <div>
+                            <h1 class="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                                SecureID Pro
+                            </h1>
+                            <p class="text-sm" style="color: var(--text-main);">Explore Advanced Features</p>
+                        </div>
+                    </div>
+                    <nav class="flex space-x-4 items-center">
+                        <!-- Home Button styled like history page -->
+                        <a href="secureID.html" class="px-4 py-2 rounded-lg glass-effect hover:bg-white/20 transition flex items-center bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600">
+                            <i class="fas fa-home mr-2"></i>Home
+                        </a>
+                        <a href="dashboard.html" class="px-4 py-2 rounded-lg glass-effect hover:bg-white/20 transition flex items-center">
+                            <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+                        </a>
+                    </nav>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="container mx-auto px-4 py-8 flex">
+            <!-- Sidebar -->
+            <div class="sidebar w-64 hidden md:block mr-8 rounded-lg p-4 glass-effect">
+                <h3 class="text-lg font-bold mb-4 text-accent">Features Navigation</h3>
+                <ul class="space-y-2">
+                    <li><a href="#ai-detection" class="block px-3 py-2 rounded hover:bg-white/10 transition">
+                        <i class="fas fa-brain mr-2"></i>AI Detection
+                    </a></li>
+                    <li><a href="#masking-methods" class="block px-3 py-2 rounded hover:bg-white/10 transition">
+                        <i class="fas fa-mask mr-2"></i>Masking Methods
+                    </a></li>
+                    <li><a href="#security" class="block px-3 py-2 rounded hover:bg-white/10 transition">
+                        <i class="fas fa-lock mr-2"></i>Security
+                    </a></li>
+                    <li><a href="#workflow" class="block px-3 py-2 rounded hover:bg-white/10 transition">
+                        <i class="fas fa-project-diagram mr-2"></i>Workflow
+                    </a></li>
+                    <li><a href="#roadmap" class="block px-3 py-2 rounded hover:bg-white/10 transition">
+                        <i class="fas fa-map mr-2"></i>Roadmap
+                    </a></li>
+                </ul>
+                
+                <div class="mt-8 p-4 glass-effect rounded-lg">
+                    <h4 class="text-sm font-bold mb-3 text-accent">Feature Highlights</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li class="flex items-start">
+                            <i class="fas fa-check text-green-400 mr-2 mt-1"></i>
+                            <span>AI-powered detection</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check text-green-400 mr-2 mt-1"></i>
+                            <span>Multiple masking methods</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check text-green-400 mr-2 mt-1"></i>
+                            <span>Local processing</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check text-green-400 mr-2 mt-1"></i>
+                            <span>Detailed reports</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="flex-1">
+                <!-- Hero Section -->
+                <div class="glass-effect rounded-2xl p-8 mb-8 neon-border" style="background: linear-gradient(to right, rgba(30, 144, 255, 0.2), rgba(75, 0, 130, 0.2));">
+                    <div class="flex flex-col md:flex-row items-center">
+                        <div class="md:w-2/3 mb-6 md:mb-0">
+                            <h1 class="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+                                Explore SecureID Pro Features
+                            </h1>
+                            <p class="text-xl mb-6" style="color: var(--text-main);">
+                                Discover the powerful capabilities of our advanced personal information masking tool designed to protect your privacy.
+                            </p>
+                            <div class="flex flex-wrap gap-4">
+                                <button class="btn-3d bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-3 rounded-lg font-medium">
+                                    <i class="fas fa-play mr-2"></i>Watch Demo
+                                </button>
+                                <button class="btn-3d bg-gradient-to-r from-gray-600 to-gray-700 text-white px-6 py-3 rounded-lg font-medium">
+                                    <i class="fas fa-book mr-2"></i>Read Documentation
+                                </button>
+                            </div>
+                        </div>
+                        <div class="md:w-1/3 flex justify-center">
+                            <i class="fas fa-shield-alt text-8xl md:text-9xl text-blue-400 floating"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Detection Section -->
+                <section id="ai-detection" class="mb-16 fade-in-up">
+                    <div class="flex items-center mb-6">
+                        <div class="bg-gradient-to-r from-blue-500 to-blue-400 w-12 h-12 rounded-lg flex items-center justify-center mr-4">
+                            <i class="fas fa-brain text-white text-xl"></i>
+                        </div>
+                        <h2 class="text-3xl font-bold">AI-Powered Detection</h2>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                        <div class="glass-effect rounded-xl p-6 feature-card">
+                            <div class="feature-icon bg-gradient-to-r from-blue-500 to-blue-400">
+                                <i class="fas fa-eye text-white text-2xl"></i>
+                            </div>
+                            <h3 class="text-xl font-semibold mb-3">Advanced OCR Technology</h3>
+                            <p class="text-gray-300 mb-4">
+                                Our Optical Character Recognition (OCR) engine accurately extracts text from any document with industry-leading precision.
+                            </p>
+                            <ul class="space-y-2 text-sm text-gray-400">
+                                <li class="flex items-start">
+                                    <i class="fas fa-check text-blue-400 mr-2 mt-1"></i>
+                                    <span>Supports multiple document formats and languages</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fas fa-check text-blue-400 mr-2 mt-1"></i>
+                                    <span>Handles low-quality scans and photos</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fas fa-check text-blue-400 mr-2 mt-1"></i>
+                                    <span>Preserves original document layout</span>
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <div class="glass-effect rounded-xl p-6 feature-card">
+                            <div class="feature-icon bg-gradient-to-r from-purple-500 to-purple-400">
+                                <i class="fas fa-search text-white text-2xl"></i>
+                            </div>
+                            <h3 class="text-xl font-semibold mb-3">Pattern Recognition</h3>
+                            <p class="text-gray-300 mb-4">
+                                Intelligent algorithms detect common patterns like Social Security numbers, phone numbers, and more.
+                            </p>
+                            <ul class="space-y-2 text-sm text-gray-400">
+                                <li class="flex items-start">
+                                    <i class="fas fa-check text-purple-400 mr-2 mt-1"></i>
+                                    <span>Recognizes 50+ sensitive data patterns</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fas fa-check text-purple-400 mr-2 mt-1"></i>
+                                    <span>Custom pattern detection rules</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fas fa-check text-purple-400 mr-2 mt-1"></i>
+                                    <span>International format support</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Masking Methods Section -->
+                <section id="masking-methods" class="mb-16 fade-in-up">
+                    <div class="flex items-center mb-6">
+                        <div class="bg-gradient-to-r from-purple-500 to-purple-400 w-12 h-12 rounded-lg flex items-center justify-center mr-4">
+                            <i class="fas fa-mask text-white text-xl"></i>
+                        </div>
+                        <h2 class="text-3xl font-bold">Masking Methods</h2>
+                    </div>
+                    
+                    <div class="glass-effect rounded-xl p-6 mb-8 feature-card">
+                        <h3 class="text-2xl font-semibold mb-6">Multiple Protection Techniques</h3>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <h4 class="text-lg font-semibold mb-3 flex items-center">
+                                    <i class="fas fa-square text-blue-400 mr-2"></i>
+                                    Black Rectangle
+                                </h4>
+                                <p class="text-gray-300 mb-4">
+                                    Traditional solid black boxes completely obscure sensitive information.
+                                </p>
+                                <div class="bg-black p-4 rounded-lg">
+                                    <div class="bg-gray-800 h-8 mb-2"></div>
+                                    <div class="bg-gray-800 h-8 w-3/4"></div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h4 class="text-lg font-semibold mb-3 flex items-center">
+                                    <i class="fas fa-blur text-purple-400 mr-2"></i>
+                                    Gaussian Blur
+                                </h4>
+                                <p class="text-gray-300 mb-4">
+                                    Applies a blur effect that makes text unreadable while maintaining visual flow.
+                                </p>
+                                <div class="bg-black p-4 rounded-lg">
+                                    <div class="bg-gray-800 h-8 mb-2 blur-sm"></div>
+                                    <div class="bg-gray-800 h-8 w-3/4 blur-sm"></div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h4 class="text-lg font-semibold mb-3 flex items-center">
+                                    <i class="fas fa-th-large text-green-400 mr-2"></i>
+                                    Pixelation
+                                </h4>
+                                <p class="text-gray-300 mb-4">
+                                    Converts sensitive areas into blocky pixels for effective obfuscation.
+                                </p>
+                                <div class="bg-black p-4 rounded-lg">
+                                    <div class="bg-gray-800 h-8 mb-2" style="image-rendering: pixelated;"></div>
+                                    <div class="bg-gray-800 h-8 w-3/4" style="image-rendering: pixelated;"></div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h4 class="text-lg font-semibold mb-3 flex items-center">
+                                    <i class="fas fa-pattern-brush text-yellow-400 mr-2"></i>
+                                    Pattern Redaction
+                                </h4>
+                                <p class="text-gray-300 mb-4">
+                                    Applies a visual pattern that effectively hides information while looking intentional.
+                                </p>
+                                <div class="bg-black p-4 rounded-lg">
+                                    <div class="h-8 mb-2" style="background: repeating-linear-gradient(45deg, #333, #333 2px, #000 2px, #000 4px);"></div>
+                                    <div class="h-8 w-3/4" style="background: repeating-linear-gradient(45deg, #333, #333 2px, #000 2px, #000 4px);"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="glass-effect rounded-xl p-6 feature-card">
+                        <h3 class="text-2xl font-semibold mb-6">See It In Action</h3>
+                        <div class="comparison-slider">
+                            <img src="https://via.placeholder.com/800x400?text=Original+Document" alt="Original Document" class="before">
+                            <img src="https://via.placeholder.com/800x400?text=Masked+Document" alt="Masked Document">
+                            <div class="slider-handle"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Security Section -->
+                <section id="security" class="mb-16 fade-in-up">
+                    <div class="flex items-center mb-6">
+                        <div class="bg-gradient-to-r from-green-500 to-green-400 w-12 h-12 rounded-lg flex items-center justify-center mr-4">
+                            <i class="fas fa-lock text-white text-xl"></i>
+                        </div>
+                        <h2 class="text-3xl font-bold">Security & Privacy</h2>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div class="glass-effect rounded-xl p-6 feature-card">
+                            <div class="feature-icon bg-gradient-to-r from-green-500 to-green-400">
+                                <i class="fas fa-laptop-code text-white text-2xl"></i>
+                            </div>
+                            <h3 class="text-xl font-semibold mb-3">Local Processing</h3>
+                            <p class="text-gray-300 mb-4">
+                                All processing happens in your browser. Your documents never leave your device.
+                            </p>
+                            <div class="text-sm text-green-400 font-medium">
+                                <i class="fas fa-check-circle mr-2"></i>No data transmission
+                            </div>
+                        </div>
+                        
+                        <div class="glass-effect rounded-xl p-6 feature-card">
+                            <div class="feature-icon bg-gradient-to-r from-blue-500 to-blue-400">
+                                <i class="fas fa-shield-alt text-white text-2xl"></i>
+                            </div>
+                            <h3 class="text-xl font-semibold mb-3">Military-Grade Encryption</h3>
+                            <p class="text-gray-300 mb-4">
+                                Optional AES-256 encryption for stored documents and exports.
+                            </p>
+                            <div class="text-sm text-blue-400 font-medium">
+                                <i class="fas fa-check-circle mr-2"></i>Bank-level security
+                            </div>
+                        </div>
+                        
+                        <div class="glass-effect rounded-xl p-6 feature-card">
+                            <div class="feature-icon bg-gradient-to-r from-purple-500 to-purple-400">
+                                <i class="fas fa-history text-white text-2xl"></i>
+                            </div>
+                            <h3 class="text-xl font-semibold mb-3">Automatic Cleanup</h3>
+                            <p class="text-gray-300 mb-4">
+                                Temporary files are automatically deleted after processing.
+                            </p>
+                            <div class="text-sm text-purple-400 font-medium">
+                                <i class="fas fa-check-circle mr-2"></i>No residual data
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="glass-effect rounded-xl p-6 feature-card">
+                        <h3 class="text-2xl font-semibold mb-6">Security Certifications</h3>
+                        <div class="flex flex-wrap justify-center gap-8">
+                            <div class="text-center">
+                                <div class="bg-gray-800 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-2">
+                                    <i class="fas fa-shield-check text-3xl text-green-400"></i>
+                                </div>
+                                <div class="text-sm font-medium">GDPR Compliant</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="bg-gray-800 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-2">
+                                    <i class="fas fa-user-shield text-3xl text-blue-400"></i>
+                                </div>
+                                <div class="text-sm font-medium">HIPAA Ready</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="bg-gray-800 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-2">
+                                    <i class="fas fa-certificate text-3xl text-purple-400"></i>
+                                </div>
+                                <div class="text-sm font-medium">SOC 2 Type II</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="bg-gray-800 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-2">
+                                    <i class="fas fa-lock text-3xl text-yellow-400"></i>
+                                </div>
+                                <div class="text-sm font-medium">AES-256</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Workflow Section -->
+                <section id="workflow" class="mb-16 fade-in-up">
+                    <div class="flex items-center mb-6">
+                        <div class="bg-gradient-to-r from-cyan-500 to-cyan-400 w-12 h-12 rounded-lg flex items-center justify-center mr-4">
+                            <i class="fas fa-project-diagram text-white text-xl"></i>
+                        </div>
+                        <h2 class="text-3xl font-bold">Workflow Integration</h2>
+                    </div>
+                    
+                    <div class="glass-effect rounded-xl p-6 mb-8 feature-card">
+                        <h3 class="text-2xl font-semibold mb-6">Seamless Document Processing</h3>
+                        
+                        <div class="timeline">
+                            <div class="timeline-item left">
+                                <div class="glass-effect p-4 rounded-lg">
+                                    <h4 class="font-semibold mb-2">1. Upload Document</h4>
+                                    <p class="text-sm text-gray-300">Drag & drop or select your ID document for processing</p>
+                                </div>
+                            </div>
+                            <div class="timeline-item right">
+                                <div class="glass-effect p-4 rounded-lg">
+                                    <h4 class="font-semibold mb-2">2. Automatic Detection</h4>
+                                    <p class="text-sm text-gray-300">AI identifies all sensitive information with high accuracy</p>
+                                </div>
+                            </div>
+                            <div class="timeline-item left">
+                                <div class="glass-effect p-4 rounded-lg">
+                                    <h4 class="font-semibold mb-2">3. Apply Masking</h4>
+                                    <p class="text-sm text-gray-300">Choose from multiple masking methods to protect data</p>
+                                </div>
+                            </div>
+                            <div class="timeline-item right">
+                                <div class="glass-effect p-4 rounded-lg">
+                                    <h4 class="font-semibold mb-2">4. Review & Export</h4>
+                                    <p class="text-sm text-gray-300">Verify results and download secured document</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="glass-effect rounded-xl p-6 feature-card">
+                            <div class="feature-icon bg-gradient-to-r from-blue-500 to-blue-400">
+                                <i class="fas fa-plug text-white text-2xl"></i>
+                            </div>
+                            <h3 class="text-xl font-semibold mb-3">API Integration</h3>
+                            <p class="text-gray-300 mb-4">
+                                Integrate SecureID Pro directly into your existing workflows with our robust API.
+                            </p>
+                            <div class="flex flex-wrap gap-2">
+                                <span class="px-3 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-300">REST API</span>
+                                <span class="px-3 py-1 rounded-full text-xs font-medium bg-purple-500/20 text-purple-300">Webhooks</span>
+                                <span class="px-3 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-300">SDKs</span>
+                            </div>
+                        </div>
+                        
+                        <div class="glass-effect rounded-xl p-6 feature-card">
+                            <div class="feature-icon bg-gradient-to-r from-purple-500 to-purple-400">
+                                <i class="fas fa-cloud text-white text-2xl"></i>
+                            </div>
+                            <h3 class="text-xl font-semibold mb-3">Cloud Storage</h3>
+                            <p class="text-gray-300 mb-4">
+                                Connect directly to your cloud storage providers for seamless document processing.
+                            </p>
+                            <div class="flex space-x-4">
+                                <i class="fab fa-dropbox text-2xl text-blue-400"></i>
+                                <i class="fab fa-google-drive text-2xl text-yellow-400"></i>
+                                <i class="fab fa-microsoft text-2xl text-green-400"></i>
+                                <i class="fas fa-database text-2xl text-purple-400"></i>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Roadmap Section -->
+                <section id="roadmap" class="mb-16 fade-in-up">
+                    <div class="flex items-center mb-6">
+                        <div class="bg-gradient-to-r from-yellow-500 to-yellow-400 w-12 h-12 rounded-lg flex items-center justify-center mr-4">
+                            <i class="fas fa-map text-white text-xl"></i>
+                        </div>
+                        <h2 class="text-3xl font-bold">Development Roadmap</h2>
+                    </div>
+                    
+                    <div class="glass-effect rounded-xl p-6 feature-card">
+                        <h3 class="text-2xl font-semibold mb-6">Upcoming Features</h3>
+                        
+                        <div class="space-y-4">
+                            <div class="flex items-start">
+                                <div class="bg-blue-500/20 rounded-lg p-3 mr-4">
+                                    <i class="fas fa-check-circle text-blue-400"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold">Batch Processing</h4>
+                                    <p class="text-sm text-gray-400">Process multiple documents at once with automated workflows (Q3 2024)</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start">
+                                <div class="bg-purple-500/20 rounded-lg p-3 mr-4">
+                                    <i class="fas fa-spinner text-purple-400 pulsing"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold">Video Redaction</h4>
+                                    <p class="text-sm text-gray-400">Automatically detect and mask sensitive information in videos (Q4 2024)</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start">
+                                <div class="bg-green-500/20 rounded-lg p-3 mr-4">
+                                    <i class="fas fa-clock text-green-400"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold">Real-Time Processing</h4>
+                                    <p class="text-sm text-gray-400">Instant detection and masking for live camera feeds (Q1 2025)</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start">
+                                <div class="bg-yellow-500/20 rounded-lg p-3 mr-4">
+                                    <i class="fas fa-lightbulb text-yellow-400"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold">Smart Suggestions</h4>
+                                    <p class="text-sm text-gray-400">AI-powered recommendations for optimal masking (Q2 2025)</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="glass-effect mt-16 border-t border-white/10">
+            <div class="container mx-auto px-4 py-8">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <div class="mb-6 md:mb-0">
+                        <div class="flex items-center mb-2">
+                            <i class="fas fa-shield-halved text-2xl mr-2 text-blue-400"></i>
+                            <span class="text-xl font-bold">SecureID Pro</span>
+                        </div>
+                        <p class="text-gray-400">Advanced privacy protection for the digital age.</p>
+                    </div>
+                    <div class="flex space-x-6">
+                        <a href="#" class="text-gray-400 hover:text-white transition">
+                            <i class="fab fa-github text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition">
+                            <i class="fab fa-linkedin text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition">
+                            <i class="fab fa-twitter text-xl"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="border-t border-gray-700 mt-6 pt-6 text-center text-gray-400 text-sm">
+                    <p>&copy; 2024 SecureID Pro. All rights reserved. | Features v2.0</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Three.js Background Animation
+        function initThreeJS() {
+            const container = document.getElementById('threejs-background');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            // Scene
+            const scene = new THREE.Scene();
+            
+            // Camera
+            const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+            camera.position.z = 30;
+            
+            // Renderer
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(width, height);
+            container.appendChild(renderer.domElement);
+            
+            // Particles
+            const particlesGeometry = new THREE.BufferGeometry();
+            const particleCount = 800;
+            
+            const posArray = new Float32Array(particleCount * 3);
+            const colorArray = new Float32Array(particleCount * 3);
+            
+            for(let i = 0; i < particleCount * 3; i++) {
+                posArray[i] = (Math.random() - 0.5) * 80;
+                colorArray[i] = Math.random();
+            }
+            
+            particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+            particlesGeometry.setAttribute('color', new THREE.BufferAttribute(colorArray, 3));
+            
+            const particlesMaterial = new THREE.PointsMaterial({
+                size: 0.3,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.6,
+                blending: THREE.AdditiveBlending
+            });
+            
+            const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+            scene.add(particlesMesh);
+            
+            // Animated shapes
+            const geometry = new THREE.IcosahedronGeometry(8, 0);
+            const material = new THREE.MeshBasicMaterial({ 
+                color: 0x007B8A,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.3
+            });
+            const icosahedron = new THREE.Mesh(geometry, material);
+            scene.add(icosahedron);
+            
+            // Animation loop
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                particlesMesh.rotation.x += 0.0003;
+                particlesMesh.rotation.y += 0.0007;
+                
+                icosahedron.rotation.x += 0.003;
+                icosahedron.rotation.y += 0.007;
+                
+                renderer.render(scene, camera);
+            }
+            
+            // Handle resize
+            window.addEventListener('resize', () => {
+                const width = container.clientWidth;
+                const height = container.clientHeight;
+                
+                camera.aspect = width / height;
+                camera.updateProjectionMatrix();
+                renderer.setSize(width, height);
+            });
+            
+            animate();
+        }
+
+        // Initialize comparison slider
+        function initComparisonSlider() {
+            const slider = document.querySelector('.comparison-slider');
+            if (!slider) return;
+            
+            const before = slider.querySelector('.before');
+            const handle = slider.querySelector('.slider-handle');
+            
+            let isDragging = false;
+            
+            function moveHandle(e) {
+                if (!isDragging) return;
+                
+                let x;
+                if (e.type === 'mousemove') {
+                    x = e.pageX - slider.getBoundingClientRect().left;
+                } else {
+                    x = e.touches[0].pageX - slider.getBoundingClientRect().left;
+                }
+                
+                if (x < 0) x = 0;
+                if (x > slider.offsetWidth) x = slider.offsetWidth;
+                
+                const percent = (x / slider.offsetWidth) * 100;
+                before.style.width = percent + '%';
+                handle.style.left = percent + '%';
+            }
+            
+            function startDrag() {
+                isDragging = true;
+            }
+            
+            function endDrag() {
+                isDragging = false;
+            }
+            
+            // Mouse events
+            handle.addEventListener('mousedown', startDrag);
+            document.addEventListener('mouseup', endDrag);
+            document.addEventListener('mousemove', moveHandle);
+            
+            // Touch events
+            handle.addEventListener('touchstart', startDrag);
+            document.addEventListener('touchend', endDrag);
+            document.addEventListener('touchmove', moveHandle);
+        }
+
+        // Initialize smooth scrolling for anchor links
+        function initSmoothScrolling() {
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    const targetId = this.getAttribute('href');
+                    const targetElement = document.querySelector(targetId);
+                    
+                    if (targetElement) {
+                        targetElement.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+        }
+
+        // Initialize animations
+        function initAnimations() {
+            const animateOnScroll = () => {
+                const elements = document.querySelectorAll('.fade-in-up');
+                
+                elements.forEach(element => {
+                    const elementPosition = element.getBoundingClientRect().top;
+                    const screenPosition = window.innerHeight / 1.2;
+                    
+                    if (elementPosition < screenPosition) {
+                        element.style.opacity = '1';
+                        element.style.transform = 'translateY(0)';
+                    }
+                });
+            };
+            
+            window.addEventListener('scroll', animateOnScroll);
+            animateOnScroll(); // Run once on load
+        }
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            initThreeJS();
+            initComparisonSlider();
+            initSmoothScrolling();
+            initAnimations();
+            
+            // Add click handler for feature cards
+            document.querySelectorAll('.feature-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    // You could add functionality to expand the card or show more details
+                });
+            });
+            
+            // Add hover effects to buttons
+            document.querySelectorAll('.btn-3d').forEach(btn => {
+                btn.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-2px)';
+                    this.style.boxShadow = '0 7px 0 0 rgba(0,0,0,0.2)';
+                });
+                
+                btn.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                    this.style.boxShadow = '0 5px 0 0 rgba(0,0,0,0.2)';
+                });
+            });
+        });
+    </script>
+</body>
+</html>
